@@ -8,6 +8,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/Application.cpp
     src/Application.hpp
+    src/Point.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE 

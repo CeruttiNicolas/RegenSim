@@ -2,7 +2,8 @@
 
 #include <string>
 #include <vector>
-#include "Point.hpp"
+#include <glm/glm.hpp>
+#include "graphics/VulkanRenderer.hpp"
 
 class Application {
 public:
@@ -16,11 +17,11 @@ private:
     std::string inputFilePath;
 
     struct SimulationInput {
-        std::vector<Point> contour;
-        Point chamber, throat, exit;
+        std::vector<glm::vec3> contour;
+        glm::vec3 chamber, throat, exit;
         float ac, at, ae, bc, bt, be, wi, wo;
     };
+    
     SimulationInput simInput;
-
     SimulationInput readInput(const std::string& path);
 };

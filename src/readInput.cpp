@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <glm/glm.hpp>
 #include <nlohmann/json.hpp>
 
 Application::SimulationInput Application::readInput(const std::string& path) {
@@ -28,14 +29,14 @@ Application::SimulationInput Application::readInput(const std::string& path) {
     const auto& points = data["contour"];
 
     for (auto& p : points) {
-        input.contour.emplace_back(p[0], p[1]);
+        input.contour.emplace_back(p[0], p[1], 0.0f);
     }
 
     input.chamber = input.contour.front();
     input.exit = input.contour.back();
-    input.throat = [] (const std::vector<Point>& contour) {
+    input.throat = [] (const std::vector<glm::vec3>& contour) {
         return *std::min_element(contour.begin(), contour.end(),
-            [](const Point& a, const Point& b) {
+            [](const glm::vec3& a, const glm::vec3& b) {
                 return a.y < b.y;
             });
     }(input.contour);

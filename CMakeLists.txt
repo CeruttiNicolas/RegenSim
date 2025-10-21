@@ -15,21 +15,29 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-# Source files
+# --- Source files ---
 set(SRC_FILES
     src/main.cpp
     src/Application.cpp
     src/readInput.cpp
 )
+
+# Graphics source files
 file(GLOB GRAPHICS_SRC_FILES src/graphics/*.cpp)
 list(APPEND SRC_FILES ${GRAPHICS_SRC_FILES})
     
+# --- Header files ---
 set(HEADER_FILES
     src/Application.hpp
     src/exePath.hpp
-    src/graphics/Vertex.hpp
-    src/graphics/VulkanRenderer.hpp
+    src/simulationInput.hpp
 )
+
+# Graphics header files
+file(GLOB GRAPHICS_HEADER_FILES src/graphics/*.hpp)
+list(APPEND HEADER_FILES ${GRAPHICS_HEADER_FILES})
+
+
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 

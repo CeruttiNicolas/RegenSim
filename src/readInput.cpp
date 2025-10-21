@@ -1,11 +1,12 @@
 #include "Application.hpp"
+#include "SimulationInput.hpp"
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <nlohmann/json.hpp>
 
-Application::SimulationInput Application::readInput(const std::string& path) {
+SimulationInput Application::readInput(const std::string& path) {
     SimulationInput input;
     using json = nlohmann::json;
     std::ifstream f(path);

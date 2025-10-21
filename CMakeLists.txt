@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(RegenSim)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -25,7 +25,12 @@ set(SRC_FILES
 # Graphics source files
 file(GLOB GRAPHICS_SRC_FILES src/graphics/*.cpp)
 list(APPEND SRC_FILES ${GRAPHICS_SRC_FILES})
-    
+
+# Mesher source files
+file(GLOB MESHER_SRC_FILES src/mesher/*.cpp)
+list(APPEND SRC_FILES ${MESHER_SRC_FILES})
+
+
 # --- Header files ---
 set(HEADER_FILES
     src/Application.hpp
@@ -37,6 +42,9 @@ set(HEADER_FILES
 file(GLOB GRAPHICS_HEADER_FILES src/graphics/*.hpp)
 list(APPEND HEADER_FILES ${GRAPHICS_HEADER_FILES})
 
+# Mesher header files
+file(GLOB MESHER_HEADER_FILES src/mesher/*.hpp)
+list(APPEND HEADER_FILES ${MESHER_HEADER_FILES})
 
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})

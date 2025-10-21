@@ -1,21 +1,29 @@
 {
   "sections": {
     "chamber": [
-      0.005,
-      0.005
+      0.003,
+      0.0015
     ],
     "throat": [
-      0.005,
-      0.005
+      0.001,
+      0.001
     ],
     "exit": [
-      0.005,
-      0.005
+      0.002,
+      0.0015
     ]
   },
   "walls": {
-    "inner": 0.001,
-    "outer": 0.001
+    "inner": 0.0005,
+    "outer": 0.0005
+  },
+  "channel_number": 80,
+  "subdivisions": {
+    "inner_wall": 6,
+    "channel_along_radius": 10,
+    "outer_wall": 6,
+    "channel_along_circumference": 40,
+    "side_wall": 12
   },
   "contour": [
     [

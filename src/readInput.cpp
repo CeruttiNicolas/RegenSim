@@ -23,10 +23,12 @@ SimulationInput Application::readInput(const std::string& path) {
     }
     // TODO: Validate JSON structure according to schema, see nlohmann library
     
+    input.channelNumber = data["channel_number"];
     const auto& chamber = data["sections"]["chamber"];
     const auto& throat = data["sections"]["throat"];
     const auto& exit = data["sections"]["exit"];
     const auto& walls = data["walls"];
+    const auto& subdivisions = data["subdivisions"];
     const auto& points = data["contour"];
 
     for (auto& p : points) {
@@ -51,6 +53,13 @@ SimulationInput Application::readInput(const std::string& path) {
 
     input.wi = walls["inner"];
     input.wo = walls["outer"];
-    
+
+    input.ni = subdivisions["inner_wall"];
+    input.nb = subdivisions["channel_along_radius"];
+    input.no = subdivisions["outer_wall"];
+
+    input.nw = subdivisions["side_wall"];
+    input.na = subdivisions["channel_along_circumference"];
+
     return input;
 }

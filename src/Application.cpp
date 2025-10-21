@@ -5,17 +5,23 @@
 #include "Application.hpp"
 #include "graphics/VulkanRenderer.hpp"
 
+#define GREEN   "\033[32m"
+#define BOLD    "\033[1m"
+#define NORMAL  "\033[22m"
+#define RESET   "\033[0m"
+
 #define _DEBUG
 
 Application::Application(int argc, char** argv) {
 
-    std::string helpString = "\033[32m"
-        "\033[1m" "Usage:" "\033[22m" "\n"
+    std::string helpString =
+        GREEN
+        BOLD "Usage:\n" NORMAL
         "    RegenSim <path-to-geometry> [options]\n"
-        "\033[1m" "Options:" "\033[22m" "\n"
+        BOLD "Options:\n" NORMAL
         "    --help, -h     Show this message and exit the program\n"
         "    --visual, -v   Enable visual mode (default: disabled)"
-        "\033[0m";
+        RESET;
 
     std::vector<std::string> args(argv + 1, argv + argc);
     std::unordered_map<std::string, std::string> aliases {

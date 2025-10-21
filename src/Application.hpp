@@ -12,7 +12,7 @@ public:
     ~Application();
 
     void run();
-
+    
 private:
     bool visual = false;
     std::string inputFilePath;

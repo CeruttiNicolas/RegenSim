@@ -12,6 +12,7 @@ class Application;
 
 class VulkanRenderer {
 public:
+    VulkanRenderer(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) : vertices(vertices), indices(indices) {}
     void run(const char* windowName) {
         initWindow(windowName);
         initVulkan();
@@ -19,15 +20,8 @@ public:
         cleanup();
     }
 private:
-    const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-    };
-    const std::vector<uint16_t> indices = {
-        0, 1, 2, 2, 3, 0
-    };
+    const std::vector<Vertex>& vertices;
+    const std::vector<uint32_t>& indices;
 
     static const uint32_t WIDTH = 800;
     static const uint32_t HEIGHT = 600;

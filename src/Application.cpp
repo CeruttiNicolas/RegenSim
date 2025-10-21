@@ -1,8 +1,11 @@
 #include <iostream>
 #include <filesystem>
+#include <numbers>
+#include <numeric>
 #include <unordered_set>
 #include <unordered_map>
 #include "Application.hpp"
+#include "mesher/Mesher.hpp"
 #include "graphics/VulkanRenderer.hpp"
 
 #define GREEN   "\033[32m"
@@ -66,29 +69,106 @@ Application::Application(int argc, char** argv) {
         }
 
         if (flag == "visual") {
-        visual = true;
-        continue;
+            visual = true;
+            continue;
         }
     }
 }
 
 Application::~Application() {
-
+    
 }
 
 void Application::run() {
     std::cout << "Running application..." << std::endl;
     simInput = readInput(inputFilePath);
-    std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>();
-    #ifdef _DEBUG
-    std::cout << "Running simulation with the following input:" << std::endl
-              << "ac: " << simInput.ac << ", at: " << simInput.at << std::endl
-              << "ae: " << simInput.ae << ", bc: " << simInput.bc << std::endl
-              << "bt: " << simInput.bt << ", be: " << simInput.be << std::endl
-              << "wi: " << simInput.wi << ", wo: " << simInput.wo << std::endl
-              << "Chamber: (" << simInput.chamber.x << ", " << simInput.chamber.y << ", " << simInput.chamber.z << ")" << std::endl
-              << "Throat: (" << simInput.throat.x << ", " << simInput.throat.y << ", " << simInput.throat.z << ")" << std::endl
-              << "Exit: (" << simInput.exit.x << ", " << simInput.exit.y << ", " << simInput.exit.z << ")" << std::endl;
-    #endif
+    
+    float a;
+    std::cin >> a;
+    
+    std::unique_ptr<Mesher> mesher = std::make_unique<Mesher>();
+    std::vector<glm::vec3> resampledContour = mesher->resampleContour(simInput.contour, a);
+    std::vector<glm::vec3> sectionPoints = mesher->generateSection(simInput, simInput.contour[0], simInput.ac, simInput.bc);
+    std::vector<glm::vec3> vertexNormals = mesher->computeVertexNormals(resampledContour);
+    std::vector<glm::vec3> mesh = mesher->run(resampledContour, a, simInput);
+    
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(vertices, indices);
+    
+    // --- Show Section --------------------------------------------------------------------------------------
+    float k = 175.0f;
+    int i = 0;
+    for (const auto& p : sectionPoints) {
+        // std::cout << "Point: (" << p.z * k << ", " << p.y * k << ")" << std::endl;
+        //if ((i % 43 < 6 || i % 43 > 36) || (i / 43 < 10 || i / 43 > 50)) {
+        if ( (i % (simInput.ni + simInput.nb + simInput.no + 1) < simInput.ni
+          ||  i % (simInput.ni + simInput.nb + simInput.no + 1) > simInput.ni + simInput.nb) 
+          || (i / (simInput.ni + simInput.nb + simInput.no + 1) < simInput.nw)  ||
+              i / (simInput.ni + simInput.nb + simInput.no + 1) > simInput.nw + simInput.na) {
+            vertices.push_back({{k * p.z*4.0f/3.0f, -k*p.y}, {1.0f, 1.0f, 1.0f}});
+        } else {
+            vertices.push_back({{k * p.z*4.0f/3.0f, -k*p.y}, {0.0f, 0.0f, 1.0f}});
+        }
+        i++;
+    }
+
+    indices.resize(vertices.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    vulkanRenderer->run("Section");
+
+    vertices.clear();
+    indices.clear();
+
+    // --- Show Contour --------------------------------------------------------------------------------------
+    for (const auto& p : resampledContour) {
+        vertices.push_back({{6 * p.x + 0.5f, 6 * -p.y}, {1.0f, 1.0f, 1.0f}});
+    }
+
+    indices.resize(vertices.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
     vulkanRenderer->run("Contour");
+
+    vertices.clear();
+    indices.clear();
+
+    // --- Show Normals --------------------------------------------------------------------------------------
+    for (int i = 0; i < vertexNormals.size(); i++) {
+        glm::vec3 p = resampledContour[i];
+        glm::vec3 np = p + vertexNormals[i]*(simInput.wi + simInput.bt + simInput.wo);
+        vertices.push_back({{6 * p.x + 0.5f, 6 * -p.y + 0.2f}, {1.0f, 1.0f, 1.0f}});
+        vertices.push_back({{6 * np.x + 0.5f, 6 * -np.y + 0.2f}, {1.0f, 1.0f, 1.0f}});
+    }
+
+    indices.resize(vertices.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    vulkanRenderer->run("Normals");
+
+    vertices.clear();
+    indices.clear();
+
+    // --- Show Mesh --------------------------------------------------------------------------------------
+    for (const auto &p : mesh) {
+        vertices.push_back({{6 * p.x + 0.5f, 6 * -p.y + 0.2f}, {1.0f, 1.0f, 1.0f}}); 
+    }
+
+    indices.resize(vertices.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    vulkanRenderer->run("Mesh");
+
+    // TODO: Edit solid mesh creation with "target length" parameter describing desired size of mesh elements for contour resampling and section generation
+    
+    //vulkanWindow = std::make_unique<VulkanRenderer>();
+    //vulkanWindow->run("Wireframe");    
+
+    // Show Contour (if in visual mode //TODO)
+    // showContour(simInput.contour); 
+    // Generate Wireframe
+    // Application::generateWireframe(simInput); where simInput is passed by const reference so implementation will be void Application::generateWireframe(const SimulationInput& simInput) {
+    // Show Wireframe (if in visual mode //TODO)
+    // showWireframe();
 }

@@ -3,9 +3,10 @@
 #include <optional>
 #include <vector>
 #include <string>
+#include "Vertex.hpp"
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include "Vertex.hpp"
 
 class Application;
 

@@ -1,31 +1,31 @@
-#include "Mesher.hpp"
+#include "mesher/Mesher.hpp"
 
 #define MAX_ATTEMPTS 100
 #define ERROR_THRESHOLD 1e-5
 
-std::vector<glm::vec3> Mesher::resampleContour(const std::vector<glm::vec3>& contour, float stepSize) {
+std::vector<glm::dvec3> Mesher::resampleContour(const std::vector<glm::dvec3>& contour, double stepSize) {
     auto start = std::chrono::high_resolution_clock::now();
     std::cout << "Resampling contour..." << std::endl;
-    float arcLenght = 0.0f;
+    double arcLenght = 0.0;
     for (int i = 0; i < contour.size() - 1; i++) {
         arcLenght += glm::distance(contour[i], contour[i+1]);
     }
 
     int numPoints = static_cast<int>(std::round(arcLenght / stepSize)) + 1;
-    float upperBound = arcLenght / (numPoints - 1);
-    float lowerBound = arcLenght / (numPoints + 1);
+    double upperBound = stepSize * 1.5;
+    double lowerBound = stepSize * 0.5;
 
-    std::vector<glm::vec3> resampled;
-    float error = std::numeric_limits<float>::infinity();
+    std::vector<glm::dvec3> resampled;
+    double error = std::numeric_limits<double>::infinity();
     int attempt = 0;
     while (error > ERROR_THRESHOLD) {
-        float radius = (upperBound + lowerBound) / 2.0f;
+        double radius = (upperBound + lowerBound) / 2.0;
         resampled.clear();
-        glm::vec3 origin = contour[0];
+        glm::dvec3 origin = contour[0];
         resampled.push_back(origin);
         bool done = false;
         for (int i = 0; i < contour.size() - 1; i++) {
-            glm::vec3 vector = contour[i+1] - contour[i];
+            glm::dvec3 vector = contour[i+1] - contour[i];
             while (glm::distance(contour[i+1], origin) > radius) {
                 origin = intersectRaySphere(contour[i], vector, origin, radius);
                 resampled.push_back(origin);
@@ -38,7 +38,7 @@ std::vector<glm::vec3> Mesher::resampleContour(const std::vector<glm::vec3>& con
                 break;  
             }
         }
-        float lastDistance = glm::distance(contour.back(), resampled.back());
+        double lastDistance = glm::distance(contour.back(), resampled.back());
         if (lastDistance > radius) {
             lowerBound = radius;
         } else {
@@ -47,7 +47,7 @@ std::vector<glm::vec3> Mesher::resampleContour(const std::vector<glm::vec3>& con
         error = abs(lastDistance - radius);
 
         if (attempt > MAX_ATTEMPTS) {
-            std::cout << "Resampling did not converge after " << MAX_ATTEMPTS << " attempts, stopping." << std::endl;
+            std::cout << "Resampling did not converge after " << MAX_ATTEMPTS << " attempts with final error being " << error << ", stopping." << std::endl;
             break;
         }
         attempt++;
@@ -56,7 +56,7 @@ std::vector<glm::vec3> Mesher::resampleContour(const std::vector<glm::vec3>& con
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Resampling took " << elapsed.count() << " seconds." << std::endl;
+    std::cout << "Resampling took " << elapsed.count() * 1000 << " milliseconds." << std::endl;
     return resampled;
 }
 

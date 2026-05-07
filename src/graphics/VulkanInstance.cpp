@@ -1,7 +1,7 @@
+#include "graphics/VulkanRenderer.hpp"
 #include <cstring>
-#include <stdexcept>
 #include <iostream>
-#include "VulkanRenderer.hpp"
+#include <stdexcept>
 
 
 void VulkanRenderer::createInstance() {

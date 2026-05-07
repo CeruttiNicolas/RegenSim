@@ -1,6 +1,6 @@
-#include <stdexcept>
+#include "graphics/VulkanRenderer.hpp"
 #include <set>
-#include "VulkanRenderer.hpp"
+#include <stdexcept>
 
 
 bool VulkanRenderer::isDeviceSuitable(VkPhysicalDevice device) {
@@ -89,6 +89,7 @@ void VulkanRenderer::createLogicalDevice() {
     }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.fillModeNonSolid = VK_TRUE; // Enable wireframe mode
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

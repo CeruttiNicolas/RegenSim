@@ -1,5 +1,5 @@
+#include "graphics/VulkanRenderer.hpp"
 #include <stdexcept>
-#include "VulkanRenderer.hpp"
 
 
 void VulkanRenderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {

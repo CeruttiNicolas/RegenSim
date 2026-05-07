@@ -1,6 +1,6 @@
-#include <stdexcept>
-#include <algorithm>
 #include "VulkanRenderer.hpp"
+#include <algorithm>
+#include <stdexcept>
 
 
 void VulkanRenderer::createSurface() {
@@ -152,7 +152,6 @@ void VulkanRenderer::createImageViews() {
 
 void VulkanRenderer::recreateSwapChain() {
     int width = 0, height = 0;
-    glfwGetFramebufferSize(window, &width, &height);
     while (width == 0 || height == 0) {
         glfwGetFramebufferSize(window, &width, &height);
         glfwWaitEvents();
@@ -164,5 +163,6 @@ void VulkanRenderer::recreateSwapChain() {
 
     createSwapChain();
     createImageViews();
+	createDepthResources();
     createFrameBuffers();
 }

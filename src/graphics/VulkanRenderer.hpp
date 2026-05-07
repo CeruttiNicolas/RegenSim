@@ -1,12 +1,13 @@
 #pragma once
 
-#include <optional>
-#include <vector>
-#include <string>
+#include "UniformBufferObject.hpp"
 #include "Vertex.hpp"
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <optional>
+#include <string>
+#include <vector>
+
 
 class Application;
 
@@ -23,8 +24,8 @@ private:
     const std::vector<Vertex>& vertices;
     const std::vector<uint32_t>& indices;
 
-    static const uint32_t WIDTH = 800;
-    static const uint32_t HEIGHT = 600;
+    static const uint32_t WIDTH = 1600;
+    static const uint32_t HEIGHT = 1200;
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
     const std::vector<const char*> validationLayers = {
@@ -52,6 +53,9 @@ private:
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
     VkRenderPass renderPass;
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkDescriptorPool descriptorPool;
+    std::vector<VkDescriptorSet> descriptorSets;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -63,6 +67,10 @@ private:
 
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
+
+    std::vector<VkBuffer> uniformBuffers;
+    std::vector<VkDeviceMemory> uniformBuffersMemory;
+    std::vector<void*> uniformBuffersMapped;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -88,6 +96,10 @@ private:
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
     };
+
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
 
 
 
@@ -146,8 +158,41 @@ private:
     // Synchronization
     void createSyncObjects();
     void drawFrame();
+
+	// Descriptor Set
+	void createDescriptorSetLayout();
+    void createDescriptorSets();
+
+    // Descriptor Pool
+	void createDescriptorPool();
+
+	// Uniform Buffer
+	void createUniformBuffers();
+	void updateUniformBuffer(uint32_t currentImage);
+
+    // Image
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+
+    // Depth
+    void createDepthResources();
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findDepthFormat();
+    bool hasStencilComponent(VkFormat format);
     
     // Utils
     std::vector<char> readFile(const std::string& filename);
     VkShaderModule createShaderModule(const std::vector<char>& code);
+
+
+    // --- Camera & Input State ---
+    float cameraYaw = 0.0f;                         // Rotazione attorno all'asse Y (sinistra/destra)
+    float cameraPitch = glm::radians(30.0f);        // Rotazione attorno all'asse X (su/giù)
+    float cameraDistance = 10000.0f;                    // Distanza dal target (zoom)
+    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // Il punto che stiamo guardando
+
+    bool isLeftMouseDown = false;
+    bool isMiddleMouseDown = false;
+    double lastMouseX = 0.0;
+    double lastMouseY = 0.0;
 };

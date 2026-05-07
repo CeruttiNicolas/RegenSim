@@ -1,7 +1,7 @@
+#include "core/Application.hpp"  
+#include <cstdlib>
 #include <iostream>
 #include <memory>
-#include <cstdlib>
-#include "Application.hpp"  
 
 int main(int argc, char** argv) {
     try {

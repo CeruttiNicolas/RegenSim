@@ -1,27 +1,27 @@
 #pragma once
-
-#include <vector>
-#include <limits>
-#include <iostream>
+#include "utils.hpp"
+#include "core/SimulationInput.hpp"
 #include <chrono>
-
+#include <iostream>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/io.hpp>
-
-#include "utils.hpp"
-#include "SimulationInput.hpp"
+#include <limits>
+#include <numbers>
+#include <vector>
 
 class Mesher {
 public:
     //Mesher(const SimulationInput& input) : simInput(input) {};
-    std::vector<glm::vec3> run(const std::vector<glm::vec3>& contour, float stepSize, SimulationInput& input);
+    std::vector<glm::dvec3> run(SimulationInput& input);
 
-    std::vector<glm::vec3> resampleContour(const std::vector<glm::vec3>& contour, float stepSize);
-    std::vector<glm::vec3> computeVertexNormals(const std::vector<glm::vec3>& contour);
-    std::vector<glm::vec3> generateSection(SimulationInput& input, glm::vec3 point, float a, float b);
-    std::vector<glm::vec3> placeSection(std::vector<glm::vec3> section, glm::vec3&, glm::vec3& vertexNormal);
+    std::vector<glm::dvec3> resampleContour(const std::vector<glm::dvec3>& contour, double stepSize);
+    std::vector<glm::dvec3> computeVertexNormals(const std::vector<glm::dvec3>& contour);
+    std::vector<glm::dvec3> generateSection(const SimulationInput& input, glm::dvec3 point, double a, double b);
+    std::vector<glm::dvec3> placeSection(std::vector<glm::dvec3> section, glm::dvec3&, glm::dvec3& vertexNormal);
+    std::vector<double> computeVolumes(const SimulationInput& input, const std::vector<glm::dvec3>& mesh);
 private:
     //SimulationInput simInput;
 };

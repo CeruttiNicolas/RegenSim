@@ -1,7 +1,6 @@
 #pragma once
-
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #if defined(_WIN32)
     #pragma message("Compiling for Windows platform")

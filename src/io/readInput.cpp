@@ -1,9 +1,9 @@
-#include "Application.hpp"
-#include "SimulationInput.hpp"
-#include <iostream>
-#include <fstream>
+#include "core/Application.hpp"
+#include "core/SimulationInput.hpp"
 #include <algorithm>
+#include <fstream>
 #include <glm/glm.hpp>
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 SimulationInput Application::readInput(const std::string& path) {
@@ -29,17 +29,18 @@ SimulationInput Application::readInput(const std::string& path) {
     const auto& exit = data["sections"]["exit"];
     const auto& walls = data["walls"];
     const auto& subdivisions = data["subdivisions"];
+	const auto& a = data["spacing_along_channel"];
     const auto& points = data["contour"];
 
     for (auto& p : points) {
-        input.contour.emplace_back(p[0], p[1], 0.0f);
+        input.contour.emplace_back(p[0], p[1], 0.0);
     }
 
     input.chamber = input.contour.front();
     input.exit = input.contour.back();
-    input.throat = [] (const std::vector<glm::vec3>& contour) {
+    input.throat = [](const std::vector<glm::dvec3>& contour) {
         return *std::min_element(contour.begin(), contour.end(),
-            [](const glm::vec3& a, const glm::vec3& b) {
+            [](const glm::dvec3& a, const glm::dvec3& b) {
                 return a.y < b.y;
             });
     }(input.contour);
@@ -60,6 +61,8 @@ SimulationInput Application::readInput(const std::string& path) {
 
     input.nw = subdivisions["side_wall"];
     input.na = subdivisions["channel_along_circumference"];
+
+    input.a = a;
 
     return input;
 }

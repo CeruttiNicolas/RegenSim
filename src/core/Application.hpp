@@ -1,10 +1,10 @@
 #pragma once
 
+#include "core/SimulationInput.hpp"
+#include "graphics/VulkanRenderer.hpp"
+#include <glm/glm.hpp>
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
-#include "SimulationInput.hpp"
-#include "graphics/VulkanRenderer.hpp"
 
 class Application {
 public:
@@ -19,4 +19,6 @@ private:
 
     SimulationInput simInput;
     SimulationInput readInput(const std::string& path);
+
+
 };

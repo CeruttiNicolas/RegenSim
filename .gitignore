@@ -73,3 +73,6 @@ CMakeUserPresets.json
 /build
 /bin
 /.VSCodeCounter
+/.vs
+/out
+/RegenSim

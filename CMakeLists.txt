@@ -1,8 +1,11 @@
-cmake_minimum_required(VERSION 3.10)
-project(RegenSim)
+cmake_minimum_required(VERSION 3.18)
+project(RegenSim LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_CUDA_ARCHITECTURES 86)
+set(CMAKE_CUDA_FLAGS "-allow-unsupported-compiler")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
@@ -16,35 +19,56 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # --- Source files ---
-set(SRC_FILES
-    src/main.cpp
-    src/Application.cpp
-    src/readInput.cpp
-)
+set(SRC_FILES src/main.cpp)
+
+# CLI source files
+file(GLOB CLI_SRC_FILES src/cli/*.cpp)
+list(APPEND SRC_FILES ${CLI_SRC_FILES})
+
+# Core source files
+file(GLOB CORE_SRC_FILES src/core/*.cpp)
+list(APPEND SRC_FILES ${CORE_SRC_FILES})
 
 # Graphics source files
 file(GLOB GRAPHICS_SRC_FILES src/graphics/*.cpp)
 list(APPEND SRC_FILES ${GRAPHICS_SRC_FILES})
 
+# IO source files
+file(GLOB IO_SRC_FILES src/io/*.cpp)
+list(APPEND SRC_FILES ${IO_SRC_FILES})
+
 # Mesher source files
 file(GLOB MESHER_SRC_FILES src/mesher/*.cpp)
 list(APPEND SRC_FILES ${MESHER_SRC_FILES})
 
+# Utils source files
+file(GLOB UTILS_SRC_FILES src/utils/*.cpp)
+list(APPEND SRC_FILES ${UTILS_SRC_FILES})
 
 # --- Header files ---
-set(HEADER_FILES
-    src/Application.hpp
-    src/exePath.hpp
-    src/simulationInput.hpp
-)
+# CLI header files
+file(GLOB CLI_HEADER_FILES src/cli/*.hpp)
+list(APPEND HEADER_FILES ${CLI_HEADER_FILES})
+
+# Core header files
+file(GLOB CORE_HEADER_FILES src/core/*.hpp)
+list(APPEND HEADER_FILES ${CORE_HEADER_FILES})
 
 # Graphics header files
 file(GLOB GRAPHICS_HEADER_FILES src/graphics/*.hpp)
 list(APPEND HEADER_FILES ${GRAPHICS_HEADER_FILES})
 
+# IO header files
+file(GLOB IO_HEADER_FILES src/io/*.hpp)
+list(APPEND HEADER_FILES ${IO_HEADER_FILES})
+
 # Mesher header files
 file(GLOB MESHER_HEADER_FILES src/mesher/*.hpp)
 list(APPEND HEADER_FILES ${MESHER_HEADER_FILES})
+
+# Utils header files
+file(GLOB UTILS_HEADER_FILES src/utils/*.hpp)
+list(APPEND HEADER_FILES ${UTILS_HEADER_FILES})
 
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
@@ -69,9 +93,12 @@ if(NOT Vulkan_FOUND)
     message(FATAL_ERROR "Vulkan not found. Make sure the Vulkan SDK is installed and VULKAN_SDK is set.")
 endif()
 
+find_package(CUDAToolkit REQUIRED)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     Vulkan::Vulkan
+    CUDA::cudart
 )
 
 # === Shader Compilation Setup ===
@@ -109,10 +136,3 @@ endforeach()
 
 add_custom_target(compile_shaders ALL DEPENDS ${SPIRV_BINARIES})
 add_dependencies(${PROJECT_NAME} compile_shaders)
-
-
-# if(MSVC)
-#     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
-# else()
-#     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
-# endif()

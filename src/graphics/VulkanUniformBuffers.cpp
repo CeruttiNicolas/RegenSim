@@ -41,7 +41,7 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     // Trasla l'intero mondo in modo che il target diventi il centro di rotazione
     ubo.view = glm::translate(ubo.view, -cameraTarget);
 
-    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.01f, 100000.0f);
+    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 1.0f, 100000.0f);
     ubo.proj[1][1] *= -1;
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));

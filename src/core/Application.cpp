@@ -35,8 +35,24 @@ void Application::run() {
     std::vector<glm::dvec3> mesh = mesher->run(simInput);
     
     std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
-    std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(vertices, indices);
+    std::vector<uint32_t> triangleIndices;
+    std::vector<uint32_t> lineIndices;
+    std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(vertices, triangleIndices, lineIndices);
+
+    // Struct to filter duplicate quad edges
+    struct Edge {
+        uint32_t v1, v2;
+        bool operator==(const Edge& o) const {
+            return (v1 == o.v1 && v2 == o.v2) || (v1 == o.v2 && v2 == o.v1);
+        }
+    };
+    struct EdgeHash {
+        std::size_t operator()(const Edge& e) const {
+            return std::hash<uint32_t>()(std::min(e.v1, e.v2)) ^ std::hash<uint32_t>()(std::max(e.v1, e.v2));
+        }
+    };
+    std::unordered_set<Edge, EdgeHash> uniqueEdges;
+
 
 
     for (const auto& p : mesh) {
@@ -53,16 +69,23 @@ void Application::run() {
     };
 
     auto addQuad = [&](int bl, int br, int tr, int tl, bool reverseWinding = false) {
+        // tris
         if (reverseWinding) {
             // Matches your original Side face winding
-            indices.push_back(bl); indices.push_back(tr); indices.push_back(br);
-            indices.push_back(bl); indices.push_back(tl); indices.push_back(tr);
+            triangleIndices.push_back(bl); triangleIndices.push_back(tr); triangleIndices.push_back(br);
+            triangleIndices.push_back(bl); triangleIndices.push_back(tl); triangleIndices.push_back(tr);
         }
         else {
             // Matches your original Face/Top/Bottom winding
-            indices.push_back(bl); indices.push_back(br); indices.push_back(tr);
-            indices.push_back(bl); indices.push_back(tr); indices.push_back(tl);
+            triangleIndices.push_back(bl); triangleIndices.push_back(br); triangleIndices.push_back(tr);
+            triangleIndices.push_back(bl); triangleIndices.push_back(tr); triangleIndices.push_back(tl);
         }
+
+        // edges
+        uniqueEdges.insert({ (uint32_t)bl, (uint32_t)br });
+        uniqueEdges.insert({ (uint32_t)br, (uint32_t)tr });
+        uniqueEdges.insert({ (uint32_t)tr, (uint32_t)tl });
+        uniqueEdges.insert({ (uint32_t)tl, (uint32_t)bl });
     };
 
     for (int i = 0; i < width - 1; i++) {
@@ -132,9 +155,13 @@ void Application::run() {
         }
     }
 
-    
+    for (const auto& edge : uniqueEdges) {
+        lineIndices.push_back(edge.v1);
+        lineIndices.push_back(edge.v2);
+    }
+
 	//exportMeshVTK("C:\\Users\\Nicolas\\Desktop\\output.vtk", mesh, input);
-    vulkanRenderer->run("Section");
+    vulkanRenderer->run("Viewport");
 
     // TODO: Edit solid mesh creation with "target length" parameter describing desired size of mesh elements for contour resampling and section generation
 }

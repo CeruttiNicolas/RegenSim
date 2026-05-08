@@ -109,25 +109,27 @@ if(NOT GLSLC_EXECUTABLE)
 endif()
 
 set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
-set(SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
-file(MAKE_DIRECTORY ${SHADER_BIN_DIR})
+set(SHADER_DEST_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
+file(MAKE_DIRECTORY ${SHADER_DEST_DIR})
 
 set(SHADERS
     shader.vert
     shader.frag
 )
 
+set(SPIRV_BINARIES "")
+
 foreach(SHADER IN LISTS SHADERS)
     get_filename_component(FILE_EXT ${SHADER} EXT)
     string(SUBSTRING ${FILE_EXT} 1 -1 FILE_NAME_EXT)
 
-    set(SPIRV_OUTPUT ${SHADER_BIN_DIR}/${FILE_NAME_EXT}.spv)
-    message(STATUS "Shader ${SHADER} will be compiled to ${SPIRV_OUTPUT}")
+    set(SPIRV_OUTPUT ${SHADER_DEST_DIR}/${FILE_NAME_EXT}.spv)
+        
     add_custom_command(
         OUTPUT ${SPIRV_OUTPUT}
         COMMAND ${GLSLC_EXECUTABLE} ${SHADER_DIR}/${SHADER} -o ${SPIRV_OUTPUT}
         DEPENDS ${SHADER_DIR}/${SHADER}
-        COMMENT "Compiling shader: ${SHADER}"
+        COMMENT "Compiling shader in: ${SPIRV_OUTPUT}"
         VERBATIM
     )
 

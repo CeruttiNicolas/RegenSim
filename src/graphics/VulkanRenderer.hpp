@@ -13,7 +13,8 @@ class Application;
 
 class VulkanRenderer {
 public:
-    VulkanRenderer(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) : vertices(vertices), indices(indices) {}
+    VulkanRenderer(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& triangleIndices, const std::vector<uint32_t>& lineIndices)
+        : vertices(vertices), triangleIndices(triangleIndices), lineIndices(lineIndices) {}
     void run(const char* windowName) {
         initWindow(windowName);
         initVulkan();
@@ -22,7 +23,8 @@ public:
     }
 private:
     const std::vector<Vertex>& vertices;
-    const std::vector<uint32_t>& indices;
+    const std::vector<uint32_t>& triangleIndices;
+    const std::vector<uint32_t>& lineIndices;
 
     static const uint32_t WIDTH = 1600;
     static const uint32_t HEIGHT = 1200;
@@ -57,7 +59,8 @@ private:
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
     VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
+    VkPipeline solidPipeline;
+    VkPipeline wireframePipeline;
     std::vector<VkFramebuffer> swapChainFramebuffers;
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
@@ -67,6 +70,9 @@ private:
 
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
+
+	VkBuffer lineIndexBuffer;
+	VkDeviceMemory lineIndexBufferMemory;
 
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -152,6 +158,7 @@ private:
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void createVertexBuffer();
     void createIndexBuffer();
+	void createLineIndexBuffer();
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 

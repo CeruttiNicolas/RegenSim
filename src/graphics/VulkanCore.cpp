@@ -92,6 +92,7 @@ void VulkanRenderer::initVulkan() {
     createCommandPool();
     createVertexBuffer();
     createIndexBuffer();
+	createLineIndexBuffer();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -125,12 +126,16 @@ void VulkanRenderer::cleanupSwapChain() {
 void VulkanRenderer::cleanup() {
     cleanupSwapChain();
    
-    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipeline(device, solidPipeline, nullptr);
+    vkDestroyPipeline(device, wireframePipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
 
     vkDestroyBuffer(device, indexBuffer, nullptr);
     vkFreeMemory(device, indexBufferMemory, nullptr);
+
+    vkDestroyBuffer(device, lineIndexBuffer, nullptr);
+    vkFreeMemory(device, lineIndexBufferMemory, nullptr);
 
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);

@@ -14,7 +14,6 @@ void VulkanRenderer::initWindow(const char* windowName) { // TODO check if std::
 
     glfwSetWindowUserPointer(window, this);
 
-    // Callback per la rotella del mouse (Zoom)
     glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
         auto app = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
         app->cameraDistance *= static_cast<float>(yoffset) * 0.025f + 1;
@@ -22,7 +21,6 @@ void VulkanRenderer::initWindow(const char* windowName) { // TODO check if std::
 		if (app->cameraDistance > 10000.0f) app->cameraDistance = 10000.0f;
         });
 
-    // Callback per i bottoni del mouse
     glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
         auto app = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
 
@@ -30,13 +28,12 @@ void VulkanRenderer::initWindow(const char* windowName) { // TODO check if std::
             if (action == GLFW_PRESS) app->isLeftMouseDown = true;
             else if (action == GLFW_RELEASE) app->isLeftMouseDown = false;
         }
-        else if (button == GLFW_MOUSE_BUTTON_MIDDLE) { // Intercept the mouse wheel click
+        else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
             if (action == GLFW_PRESS) app->isMiddleMouseDown = true;
             else if (action == GLFW_RELEASE) app->isMiddleMouseDown = false;
         }
         });
 
-    // Callback per il movimento del mouse
     glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos) {
         auto app = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
 
@@ -50,23 +47,17 @@ void VulkanRenderer::initWindow(const char* windowName) { // TODO check if std::
             app->cameraPitch += deltaY * rotSensitivity;
         }
         else if (app->isMiddleMouseDown) {
-            // --- Panning Standard (Screen-Space Translation) ---
             float panSensitivity = 0.001f * app->cameraDistance;
 
-            // 1. Ricrea la ESATTA sequenza di rotazione usata nel tuo updateUniformBuffer
             glm::mat4 viewRot = glm::mat4(1.0f);
             viewRot = glm::rotate(viewRot, app->cameraPitch, glm::vec3(1.0f, 0.0f, 0.0f));
             viewRot = glm::rotate(viewRot, app->cameraYaw, glm::vec3(0.0f, 1.0f, 0.0f));
 
-            // 2. Inverti la matrice. 
-            // La matrice di vista va dal "Mondo" alla "Camera". La sua inversa va dalla "Camera" al "Mondo".
             glm::mat4 cameraTransform = glm::inverse(viewRot);
 
-            // 3. Ora le colonne 0 e 1 sono ESATTAMENTE l'asse X (Destra) e l'asse Y (Alto) della telecamera
             glm::vec3 right = glm::vec3(cameraTransform[0]);
             glm::vec3 up = glm::vec3(cameraTransform[1]);
 
-            // Applica la traslazione sottraendo la x (per andare a destra) e aggiungendo la y (per andare in alto)
             app->cameraTarget -= right * deltaX * panSensitivity;
             app->cameraTarget += up * deltaY * panSensitivity;
         }

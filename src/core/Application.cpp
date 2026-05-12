@@ -28,6 +28,8 @@ void Application::run() {
     std::cout << "Running application..." << std::endl;
     simInput = readInput(inputFilePath);
 	simInput.nonDimensionalize();
+
+    std::cout << "Non-Dimensionalized with reference length: " << simInput.refLength << std::endl;
     
     double a = simInput.a;
     
@@ -39,6 +41,8 @@ void Application::run() {
     std::vector<uint32_t> lineIndices;
     std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(vertices, triangleIndices, lineIndices);
 
+	double shortestEdgeLength = mesher->findShortestEdgeLength(mesh, simInput);
+	std::cout << "Shortest edge length in mesh: " << shortestEdgeLength << std::endl;
     // Struct to filter duplicate quad edges
     struct Edge {
         uint32_t v1, v2;
@@ -71,12 +75,10 @@ void Application::run() {
     auto addQuad = [&](int bl, int br, int tr, int tl, bool reverseWinding = false) {
         // tris
         if (reverseWinding) {
-            // Matches your original Side face winding
             triangleIndices.push_back(bl); triangleIndices.push_back(tr); triangleIndices.push_back(br);
             triangleIndices.push_back(bl); triangleIndices.push_back(tl); triangleIndices.push_back(tr);
         }
         else {
-            // Matches your original Face/Top/Bottom winding
             triangleIndices.push_back(bl); triangleIndices.push_back(br); triangleIndices.push_back(tr);
             triangleIndices.push_back(bl); triangleIndices.push_back(tr); triangleIndices.push_back(tl);
         }
@@ -90,18 +92,15 @@ void Application::run() {
 
     for (int i = 0; i < width - 1; i++) {
         for (int j = 0; j < height - 1; j++) {
-            // Skip the hole area for the caps
             if (i >= input.nw && i < input.nw + input.na &&
                 j >= input.ni && j < input.ni + input.nb) continue;
 
             int frontZ = 0;
             int backZ = depth - 1;
 
-            // Front Cap (Faces toward camera, normal winding)
             addQuad(getIndex(i, j, frontZ), getIndex(i + 1, j, frontZ),
                 getIndex(i + 1, j + 1, frontZ), getIndex(i, j + 1, frontZ), false);
 
-            // Back Cap (Faces away from camera, reversed winding)
             addQuad(getIndex(i, j, backZ), getIndex(i + 1, j, backZ),
                 getIndex(i + 1, j + 1, backZ), getIndex(i, j + 1, backZ), true);
         }
@@ -110,21 +109,18 @@ void Application::run() {
     for (int k = 0; k < depth - 1; k++) {
         for (int j = 0; j < height - 1; j++) {
 
-            // Outer Left (x = 0) & Outer Right (x = width - 1)
             addQuad(getIndex(0, j, k), getIndex(0, j, k + 1),
                 getIndex(0, j + 1, k + 1), getIndex(0, j + 1, k), true);
             addQuad(getIndex(width - 1, j, k), getIndex(width - 1, j, k + 1),
                 getIndex(width - 1, j + 1, k + 1), getIndex(width - 1, j + 1, k), false);
 
-            // Inner Walls (These only exist if 'j' is currently inside the hole's Y bounds)
             if (j >= input.ni && j < input.ni + input.nb) {
                 int leftWall = input.nw;
                 int rightWall = input.nw + input.na;
 
-                // Left inner wall (Faces right, into the hole)
                 addQuad(getIndex(leftWall, j, k), getIndex(leftWall, j, k + 1),
                     getIndex(leftWall, j + 1, k + 1), getIndex(leftWall, j + 1, k), false);
-                // Right inner wall (Faces left, into the hole)
+                
                 addQuad(getIndex(rightWall, j, k), getIndex(rightWall, j, k + 1),
                     getIndex(rightWall, j + 1, k + 1), getIndex(rightWall, j + 1, k), true);
             }
@@ -134,21 +130,18 @@ void Application::run() {
     for (int k = 0; k < depth - 1; k++) {
         for (int i = 0; i < width - 1; i++) {
 
-            // Outer Bottom (y = 0) & Outer Top (y = height - 1)
             addQuad(getIndex(i, 0, k), getIndex(i + 1, 0, k),
                 getIndex(i + 1, 0, k + 1), getIndex(i, 0, k + 1), true);
             addQuad(getIndex(i, height - 1, k), getIndex(i + 1, height - 1, k),
                 getIndex(i + 1, height - 1, k + 1), getIndex(i, height - 1, k + 1), false);
 
-            // Inner Floor/Ceiling (These only exist if 'i' is currently inside the hole's X bounds)
             if (i >= input.nw && i < input.nw + input.na) {
                 int floorY = input.ni;
                 int ceilY = input.ni + input.nb;
 
-                // Floor of the hole (Faces UP)
                 addQuad(getIndex(i, floorY, k), getIndex(i + 1, floorY, k),
                     getIndex(i + 1, floorY, k + 1), getIndex(i, floorY, k + 1), false);
-                // Ceiling of the hole (Faces DOWN)
+                
                 addQuad(getIndex(i, ceilY, k), getIndex(i + 1, ceilY, k),
                     getIndex(i + 1, ceilY, k + 1), getIndex(i, ceilY, k + 1), true);
             }

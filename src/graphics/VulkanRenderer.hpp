@@ -193,10 +193,10 @@ private:
 
 
     // --- Camera & Input State ---
-    float cameraYaw = 0.0f;                         // Rotazione attorno all'asse Y (sinistra/destra)
-    float cameraPitch = glm::radians(30.0f);        // Rotazione attorno all'asse X (su/giù)
-    float cameraDistance = 10000.0f;                    // Distanza dal target (zoom)
-    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // Il punto che stiamo guardando
+    float cameraYaw = 0.0f;
+    float cameraPitch = glm::radians(30.0f);
+    float cameraDistance = 10000.0f;
+    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 
     bool isLeftMouseDown = false;
     bool isMiddleMouseDown = false;

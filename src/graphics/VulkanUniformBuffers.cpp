@@ -30,15 +30,10 @@ void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     if (cameraPitch > maxPitch) cameraPitch = maxPitch;
     if (cameraPitch < -maxPitch) cameraPitch = -maxPitch;
 
-    // Costruisci la matrice di vista (View Matrix)
     ubo.view = glm::mat4(1.0f);
-    // Allontana la camera dal target lungo l'asse Z locale
     ubo.view = glm::translate(ubo.view, glm::vec3(0.0f, 0.0f, -cameraDistance));
-    // Applica il pitch (rotazione su/giù attorno all'asse X locale)
     ubo.view = glm::rotate(ubo.view, cameraPitch, glm::vec3(1.0f, 0.0f, 0.0f));
-    // Applica lo yaw (rotazione destra/sinistra attorno all'asse Y globale)
     ubo.view = glm::rotate(ubo.view, cameraYaw, glm::vec3(0.0f, 1.0f, 0.0f));
-    // Trasla l'intero mondo in modo che il target diventi il centro di rotazione
     ubo.view = glm::translate(ubo.view, -cameraTarget);
 
     ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 1.0f, 100000.0f);

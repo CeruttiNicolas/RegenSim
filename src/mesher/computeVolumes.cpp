@@ -48,7 +48,6 @@ std::vector<double> Mesher::computeVolumes(const SimulationInput& input, const s
 	for (int x = 0; x < depthInCells; x++) {
 		for (int z = 0; z < widthInCells; z++) {
 			for (int y = 0; y < heightInCells; y++) {
-				// Note: 'y' is the innermost loop since vertices are stored in column-major order (y changes fastest)
 
 				// index to extract the 8 vertices
 				int nodeIndex = x * dx + y + z * dz;

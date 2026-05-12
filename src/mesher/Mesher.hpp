@@ -22,6 +22,9 @@ public:
     std::vector<glm::dvec3> generateSection(const SimulationInput& input, glm::dvec3 point, double a, double b);
     std::vector<glm::dvec3> placeSection(std::vector<glm::dvec3> section, glm::dvec3&, glm::dvec3& vertexNormal);
     std::vector<double> computeVolumes(const SimulationInput& input, const std::vector<glm::dvec3>& mesh);
+
+    double findShortestEdgeLength(const std::vector<glm::dvec3>& mesh, const SimulationInput& input);
+
 private:
     //SimulationInput simInput;
 };

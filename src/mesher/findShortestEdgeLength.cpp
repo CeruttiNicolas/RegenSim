@@ -2,34 +2,38 @@
 #include "core/SimulationInput.hpp"
 #include <limits>
 
-double Mesher::findShortestEdgeLength(const std::vector<glm::dvec3>& mesh, const SimulationInput& input) {
+void Mesher::computeShortestEdgeLength(const SimulationInput& input, Mesh& mesh) {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::cout << "Finding shortest edge length..." << std::endl;
 
-    int height = input.ni + input.nb + input.no + 1;
-    int width = 2 * input.nw + input.na + 1;
-    int depth = mesh.size() / (width * height);
+    int heightInNodes = input.ni + input.nb + input.no + 1;
+    int widthInNodes = 2 * input.nw + input.na + 1;
+    int depthInNodes = mesh.vertices.size() / (widthInNodes * heightInNodes);
 
     auto getIndex = [&](int x, int y, int z) {
-        return y + (x * height) + (z * height * width);
+        return y + (z * heightInNodes) + (x * heightInNodes * widthInNodes);
     };
 
-	double shortestEdge = std::numeric_limits<double>::max();
-    for (int z = 0; z < depth; z++) {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+	mesh.shortestEdgeLength = std::numeric_limits<double>::max();
+    for (int x = 0; x < depthInNodes; x++) {
+        for (int z = 0; z < widthInNodes; z++) {
+            for (int y = 0; y < heightInNodes; y++) {
                 // up
-                if (y < height - 1) {
-				    shortestEdge = std::min(shortestEdge, glm::distance(mesh[getIndex(x, y, z)], mesh[getIndex(x, y + 1, z)]));
+                if (y < heightInNodes - 1) {
+				    mesh.shortestEdgeLength = std::min(mesh.shortestEdgeLength, glm::distance(mesh.vertices[getIndex(x, y, z)], mesh.vertices[getIndex(x, y + 1, z)]));
                 }
 				// right
-                if (x < width - 1) {
-                    shortestEdge = std::min(shortestEdge, glm::distance(mesh[getIndex(x, y, z)], mesh[getIndex(x + 1, y, z)]));
+                if (x < widthInNodes - 1) {
+                    mesh.shortestEdgeLength = std::min(mesh.shortestEdgeLength, glm::distance(mesh.vertices[getIndex(x, y, z)], mesh.vertices[getIndex(x + 1, y, z)]));
                 }
 				// forward
-                if (z < depth - 1) {
-                    shortestEdge = std::min(shortestEdge, glm::distance(mesh[getIndex(x, y, z)], mesh[getIndex(x, y, z + 1)]));
+                if (z < depthInNodes - 1) {
+                    mesh.shortestEdgeLength = std::min(mesh.shortestEdgeLength, glm::distance(mesh.vertices[getIndex(x, y, z)], mesh.vertices[getIndex(x, y, z + 1)]));
                 }
             }
         }
 	}
-	return shortestEdge;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+	std::cout << "Shortest edge length found: " << mesh.shortestEdgeLength << " in " << elapsed.count() * 1000 << " milliseconds." << std::endl;
 }

@@ -56,7 +56,7 @@ std::vector<glm::dvec3> Mesher::resampleContour(const std::vector<glm::dvec3>& c
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Resampling took " << elapsed.count() * 1000 << " milliseconds." << std::endl;
+    std::cout << "Resampling took " << elapsed.count() * 1000 << " milliseconds to generate " << resampled.size() << " points." << std::endl;
     return resampled;
 }
 

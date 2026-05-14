@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -51,5 +52,8 @@ struct SimulationInput {
         wi /= refLength; wo /= refLength;
 		
         a /= refLength;
+
+        std::cout << "Non-Dimensionalized input with reference length: " << refLength << std::endl;
+
 	}
 };

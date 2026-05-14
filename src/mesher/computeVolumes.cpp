@@ -28,13 +28,13 @@ double computeHexahedronVolume(const std::array<glm::dvec3, 8>& hex) {
 	return volume;
 }
 
-std::vector<double> Mesher::computeVolumes(const SimulationInput& input, const std::vector<glm::dvec3>& mesh) {
+void Mesher::computeVolumes(const SimulationInput& input, Mesh& mesh) {
 	auto start = std::chrono::high_resolution_clock::now();
 	std::cout << "Computing volumes..." << std::endl;
 
 	int heightInNodes = input.ni + input.nb + input.no + 1;
 	int widthInNodes = 2 * input.nw + input.na + 1;
-	int depthInNodes = mesh.size() / (widthInNodes * heightInNodes);
+	int depthInNodes = mesh.vertices.size() / (widthInNodes * heightInNodes);
 
 	int heightInCells = heightInNodes - 1;
 	int widthInCells = widthInNodes - 1;
@@ -43,35 +43,32 @@ std::vector<double> Mesher::computeVolumes(const SimulationInput& input, const s
 	int dx = widthInNodes * heightInNodes;
 	int dz = heightInNodes;
 
-	std::vector<double> volumes(heightInCells * widthInCells * depthInCells);
+	mesh.volumes.resize(heightInCells * widthInCells * depthInCells);
 
 	for (int x = 0; x < depthInCells; x++) {
 		for (int z = 0; z < widthInCells; z++) {
 			for (int y = 0; y < heightInCells; y++) {
-
 				// index to extract the 8 vertices
 				int nodeIndex = x * dx + y + z * dz;
-
 				// index to store the volume of the cell
 				int volumeIndex = y + (z * heightInCells) + (x * heightInCells * widthInCells);
 
 				std::array<glm::dvec3, 8> cellVertices = {
-					mesh[nodeIndex],
-					mesh[nodeIndex + dz],
-					mesh[nodeIndex + dx + dz],
-					mesh[nodeIndex + dx],
-					mesh[nodeIndex + 1],
-					mesh[nodeIndex + dz + 1],
-					mesh[nodeIndex + dx + dz + 1],
-					mesh[nodeIndex + dx + 1]
+					mesh.vertices[nodeIndex],
+					mesh.vertices[nodeIndex + dz],
+					mesh.vertices[nodeIndex + dx + dz],
+					mesh.vertices[nodeIndex + dx],
+					mesh.vertices[nodeIndex + 1],
+					mesh.vertices[nodeIndex + dz + 1],
+					mesh.vertices[nodeIndex + dx + dz + 1],
+					mesh.vertices[nodeIndex + dx + 1]
 				};
 				
-				volumes[volumeIndex] = computeHexahedronVolume(cellVertices);
+				mesh.volumes[volumeIndex] = computeHexahedronVolume(cellVertices);
 			}
 		}
 	}
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = end - start;
-	std::cout << "Computing volumes took " << elapsed.count() << " seconds." << std::endl;
-	return volumes;
+	std::cout << "Computing volumes took " << elapsed.count() * 1000 << " milliseconds." << std::endl;
 }

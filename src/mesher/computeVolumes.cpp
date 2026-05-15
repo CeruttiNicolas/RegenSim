@@ -32,26 +32,25 @@ void Mesher::computeVolumes(const SimulationInput& input, Mesh& mesh) {
 	auto start = std::chrono::high_resolution_clock::now();
 	std::cout << "Computing volumes..." << std::endl;
 
-	int heightInNodes = input.ni + input.nb + input.no + 1;
-	int widthInNodes = 2 * input.nw + input.na + 1;
-	int depthInNodes = mesh.vertices.size() / (widthInNodes * heightInNodes);
+	int Nx = mesh.Nx;
+	int Ny = mesh.Ny;
+	int Nz = mesh.Nz;
 
-	int heightInCells = heightInNodes - 1;
-	int widthInCells = widthInNodes - 1;
-	int depthInCells = depthInNodes - 1;
+	int heightInNodes = Ny + 1;
+	int widthInNodes = Nz + 1;
 
 	int dx = widthInNodes * heightInNodes;
 	int dz = heightInNodes;
 
-	mesh.volumes.resize(heightInCells * widthInCells * depthInCells);
+	mesh.volumes.resize(Ny * Nz * Nx);
 
-	for (int x = 0; x < depthInCells; x++) {
-		for (int z = 0; z < widthInCells; z++) {
-			for (int y = 0; y < heightInCells; y++) {
+	for (int x = 0; x < Nx; x++) {
+		for (int z = 0; z < Nz; z++) {
+			for (int y = 0; y < Ny; y++) {
 				// index to extract the 8 vertices
 				int nodeIndex = x * dx + y + z * dz;
 				// index to store the volume of the cell
-				int volumeIndex = y + (z * heightInCells) + (x * heightInCells * widthInCells);
+				int volumeIndex = y + (z * Ny) + (x * Ny * Nz);
 
 				std::array<glm::dvec3, 8> cellVertices = {
 					mesh.vertices[nodeIndex],

@@ -4,6 +4,8 @@
 #include <vector>
 
 struct Mesh {
+	int Nx, Ny, Nz;
+
 	std::vector<glm::dvec3> vertices;
 	std::vector<uint32_t> triangleIndices;
 	std::vector<uint32_t> lineIndices;

@@ -7,6 +7,10 @@ void Mesher::generateVertices(const SimulationInput& input, Mesh& mesh) {
     double stepSize = input.a;
     std::vector<glm::dvec3> resampledContour = resampleContour(input.contour, stepSize);
     std::vector<glm::dvec3> vertexNormals = computeVertexNormals(resampledContour);
+	
+    mesh.Nx = resampledContour.size() - 1;
+    mesh.Ny = input.ni + input.nb + input.no;
+    mesh.Nz = input.nw * 2 + input.na;
 
     double ac = input.ac, at = input.at, ae = input.ae;
     double bc = input.bc, bt = input.bt, be = input.be;
@@ -14,7 +18,7 @@ void Mesher::generateVertices(const SimulationInput& input, Mesh& mesh) {
     double throatRadius = input.throat.y;
     double exitRadius = input.exit.y;
 
-    int numVertices = resampledContour.size() * (input.ni + input.nb + input.no + 1) * (input.nw * 2 + input.na + 1);
+    int numVertices = (mesh.Nx + 1) * (mesh.Ny + 1) * (mesh.Nz + 1);
     
     mesh.vertices.reserve(numVertices);
 
@@ -39,7 +43,8 @@ void Mesher::generateVertices(const SimulationInput& input, Mesh& mesh) {
 
         mesh.vertices.insert(mesh.vertices.end(), section.begin(), section.end());
     }
-	auto end = std::chrono::high_resolution_clock::now();
+
+    auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = end - start;
 	std::cout << "Generated " << mesh.vertices.size() << " vertices in " << elapsed.count() * 1000 << " milliseconds." << std::endl;
 }

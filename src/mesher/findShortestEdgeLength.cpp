@@ -6,9 +6,9 @@ void Mesher::computeShortestEdgeLength(const SimulationInput& input, Mesh& mesh)
     auto start = std::chrono::high_resolution_clock::now();
     std::cout << "Finding shortest edge length..." << std::endl;
 
-    int heightInNodes = input.ni + input.nb + input.no + 1;
-    int widthInNodes = 2 * input.nw + input.na + 1;
-    int depthInNodes = mesh.vertices.size() / (widthInNodes * heightInNodes);
+    int depthInNodes = mesh.Nx + 1;
+    int heightInNodes = mesh.Ny + 1;
+    int widthInNodes = mesh.Nz + 1;
 
     auto getIndex = [&](int x, int y, int z) {
         return y + (z * heightInNodes) + (x * heightInNodes * widthInNodes);

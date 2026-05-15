@@ -4,13 +4,13 @@ void Mesher::computeAreas(const SimulationInput& input, Mesh& mesh) {
 	auto start = std::chrono::high_resolution_clock::now();
 	std::cout << "Computing areas..." << std::endl;
 	
-	int heightInNodes = input.ni + input.nb + input.no + 1; // y
-	int widthInNodes = 2 * input.nw + input.na + 1; // z
-	int depthInNodes = mesh.vertices.size() / (widthInNodes * heightInNodes); // x
+	int Nx = mesh.Nx;
+	int Ny = mesh.Ny;
+	int Nz = mesh.Nz;
 
-	int Nx = depthInNodes - 1;
-	int Ny = heightInNodes - 1;
-	int Nz = widthInNodes - 1;
+	int depthInNodes = Nx + 1;
+	int heightInNodes = Ny + 1;
+	int widthInNodes = Nz + 1;
 	
 	mesh.areasX.resize((Nx + 1) * Ny * Nz);
 	mesh.areasY.resize(Nx * (Ny + 1) * Nz);

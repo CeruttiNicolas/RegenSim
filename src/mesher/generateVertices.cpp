@@ -4,8 +4,8 @@ void Mesher::generateVertices(const SimulationInput& input, Mesh& mesh) {
 	auto start = std::chrono::high_resolution_clock::now();
 	std::cout << "Generating point cloud..." << std::endl;
 
-    double stepSize = input.a;
-    std::vector<glm::dvec3> resampledContour = resampleContour(input.contour, stepSize);
+    double stepSize = input.step;
+    std::vector<glm::dvec3> resampledContour = resampleContour(input);
     std::vector<glm::dvec3> vertexNormals = computeVertexNormals(resampledContour);
 	
     mesh.Nx = resampledContour.size() - 1;

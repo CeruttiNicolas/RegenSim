@@ -13,7 +13,7 @@ struct SimulationInput {
     int channelNumber;
     int ni, nb, no;
     int nw, na;
-    double a;
+    double step;
 
     double refLength;
     double Tref = 298.15;
@@ -22,6 +22,7 @@ struct SimulationInput {
 	double knockdownFactor;
 
     Piecewise alphaT;
+    Piecewise kT;
 
     std::vector<double> gas_xs, gas_Ts, gas_hs;
 
@@ -68,7 +69,7 @@ struct SimulationInput {
         bc /= refLength; bt /= refLength; be /= refLength;
         wi /= refLength; wo /= refLength;
 		
-        a /= refLength;
+        step /= refLength;
 
         std::cout << "Non-Dimensionalized input with reference length: " << refLength << std::endl;
 

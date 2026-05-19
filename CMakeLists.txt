@@ -41,6 +41,10 @@ list(APPEND SRC_FILES ${IO_SRC_FILES})
 file(GLOB MESHER_SRC_FILES src/mesher/*.cpp)
 list(APPEND SRC_FILES ${MESHER_SRC_FILES})
 
+# Thermal source files
+file(GLOB THERMAL_SRC_FILES src/thermal/*.cpp src/thermal/*.cu)
+list(APPEND SRC_FILES ${THERMAL_SRC_FILES})
+
 # Utils source files
 file(GLOB UTILS_SRC_FILES src/utils/*.cpp)
 list(APPEND SRC_FILES ${UTILS_SRC_FILES})
@@ -65,6 +69,10 @@ list(APPEND HEADER_FILES ${IO_HEADER_FILES})
 # Mesher header files
 file(GLOB MESHER_HEADER_FILES src/mesher/*.hpp)
 list(APPEND HEADER_FILES ${MESHER_HEADER_FILES})
+
+# Thermal header files
+file(GLOB THERMAL_HEADER_FILES src/mesher/*.hpp)
+list(APPEND HEADER_FILES ${THERMAL_HEADER_FILES})
 
 # Utils header files
 file(GLOB UTILS_HEADER_FILES src/utils/*.hpp)

@@ -3,9 +3,11 @@
 #define MAX_ATTEMPTS 100
 #define ERROR_THRESHOLD 1e-5
 
-std::vector<glm::dvec3> Mesher::resampleContour(const std::vector<glm::dvec3>& contour, double stepSize) {
+std::vector<glm::dvec3> Mesher::resampleContour(const SimulationInput& input) {
     auto start = std::chrono::high_resolution_clock::now();
     std::cout << "Resampling contour..." << std::endl;
+    double stepSize = input.step;
+    const std::vector<glm::dvec3>& contour = input.contour;
     double arcLenght = 0.0;
     for (int i = 0; i < contour.size() - 1; i++) {
         arcLenght += glm::distance(contour[i], contour[i+1]);

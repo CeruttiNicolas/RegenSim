@@ -28,7 +28,7 @@ private:
     void computeShortestEdgeLength(const SimulationInput& input, Mesh& mesh);
 
     // geometry helpers
-    std::vector<glm::dvec3> resampleContour(const std::vector<glm::dvec3>& contour, double stepSize);
+    std::vector<glm::dvec3> resampleContour(const SimulationInput& input);
     std::vector<glm::dvec3> computeVertexNormals(const std::vector<glm::dvec3>& contour);
 	int getThroatIndex(const std::vector<glm::dvec3>& contour);
     std::vector<glm::dvec3> generateSection(const SimulationInput& input, glm::dvec3 point, double a, double b);

@@ -32,10 +32,11 @@ SimulationInput Application::readInput(const std::string& path) {
     const auto& exit = data["sections"]["exit"];
     const auto& walls = data["walls"];
     const auto& subdivisions = data["subdivisions"];
-	const auto& a = data["spacing_along_channel"];
+	const auto& step = data["spacing_along_channel"];
     const auto& points = data["contour"];
     const auto& gasProfile = data["gas_profile"];
     const auto& alpha_T = data["alpha_T"];
+    const auto& k_T = data["k_T"];
 
     for (auto& p : points) {
         input.contour.emplace_back(p[0], p[1], 0.0);
@@ -66,6 +67,10 @@ SimulationInput Application::readInput(const std::string& path) {
         input.alphaT.addSegment(piece["range"][0], piece["range"][1], piece["function"]);
     }
 
+    for (auto& piece : k_T) {
+        input.kT.addSegment(piece["range"][0], piece["range"][1], piece["function"]);
+    }
+
     input.ac = chamber[0];
     input.bc = chamber[1];
     input.at = throat[0];
@@ -83,7 +88,7 @@ SimulationInput Application::readInput(const std::string& path) {
     input.nw = subdivisions["side_wall"];
     input.na = subdivisions["channel_along_circumference"];
 
-    input.a = a;
+    input.step = step;
 
 
     return input;

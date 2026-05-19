@@ -31,7 +31,7 @@ ExpressionEvaluator::ExpressionEvaluator(const std::string& expr) {
 				name += expr[i++];
 			}
 
-			if (name == "x") {
+			if (name == "x" || name == "T") {
 				rpn.push_back({ TokenType::Variable, 0, name });
 			}
 			else {

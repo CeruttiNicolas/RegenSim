@@ -11,9 +11,14 @@ struct Mesh {
 	std::vector<uint32_t> lineIndices;
 
 	std::vector<double> volumes;
+
 	std::vector<double> areasX;
 	std::vector<double> areasY;
 	std::vector<double> areasZ;
+
+	std::vector<double> distX;
+	std::vector<double> distY;
+	std::vector<double> distZ;
 
 	double shortestEdgeLength;
 };

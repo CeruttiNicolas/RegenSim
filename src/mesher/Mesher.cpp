@@ -9,6 +9,7 @@ Mesh Mesher::run(SimulationInput& input){
 	generateIndices(input, mesh);
 	computeVolumes(input, mesh);
 	computeAreas(input, mesh);
+	computeDistances(input, mesh);
 	computeShortestEdgeLength(input, mesh);
 
     auto end = std::chrono::high_resolution_clock::now();

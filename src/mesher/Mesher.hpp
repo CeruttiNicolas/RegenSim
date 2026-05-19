@@ -24,6 +24,7 @@ private:
     void generateIndices(const SimulationInput& input, Mesh& mesh);
     void computeVolumes(const SimulationInput& input, Mesh& mesh);
     void computeAreas(const SimulationInput& input, Mesh& mesh);
+	void computeDistances(const SimulationInput& input, Mesh& mesh);
     void computeShortestEdgeLength(const SimulationInput& input, Mesh& mesh);
 
     // geometry helpers

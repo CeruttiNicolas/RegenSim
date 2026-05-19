@@ -5,6 +5,7 @@
 #include "io/exportMeshVTK.hpp"
 #include "mesher/Mesh.hpp"
 #include "mesher/Mesher.hpp"
+#include "thermal/ThermalSolver.cuh"
 #include <filesystem>
 #include <iostream>
 #include <numbers>
@@ -42,5 +43,7 @@ void Application::run() {
     std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(rendererVertices, mesh.triangleIndices, mesh.lineIndices);
 
 	//exportMeshVTK("C:\\Users\\Nicolas\\Desktop\\output.vtk", mesh, input);
+    std::unique_ptr<ThermalSolver> thermal = std::make_unique<ThermalSolver>(simInput, mesh);
+
     vulkanRenderer->run("RegenSim");
 }

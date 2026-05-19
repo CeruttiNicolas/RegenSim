@@ -1,4 +1,5 @@
 #pragma once
+#include "core/Piecewise.hpp"
 #include <glm/glm.hpp>
 #include <algorithm>
 #include <iostream>
@@ -15,6 +16,14 @@ struct SimulationInput {
     double a;
 
     double refLength;
+    double Tref = 298.15;
+
+    double alphaMax;
+	double knockdownFactor;
+
+    Piecewise alphaT;
+
+    std::vector<double> gas_xs, gas_Ts, gas_hs;
 
     double getReferenceLength() const {
         auto safeDiv = [](double length, int subdivisions) {
@@ -42,6 +51,14 @@ struct SimulationInput {
         for (auto& p : contour) {
             p /= refLength;
 		}
+
+        for (auto& x : gas_xs) {
+            x /= refLength;
+        }
+
+        for (auto& T : gas_Ts) {
+            T /= Tref;
+        }
 
         chamber /= refLength;
         throat /= refLength;

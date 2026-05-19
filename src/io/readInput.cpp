@@ -23,6 +23,9 @@ SimulationInput Application::readInput(const std::string& path) {
     }
     // TODO: Validate JSON structure according to schema, see nlohmann library
     
+	input.alphaMax = data["alpha_max"];
+	input.knockdownFactor = data["knockdown_factor"];
+
     input.channelNumber = data["channel_number"];
     const auto& chamber = data["sections"]["chamber"];
     const auto& throat = data["sections"]["throat"];
@@ -31,9 +34,23 @@ SimulationInput Application::readInput(const std::string& path) {
     const auto& subdivisions = data["subdivisions"];
 	const auto& a = data["spacing_along_channel"];
     const auto& points = data["contour"];
+    const auto& gasProfile = data["gas_profile"];
+    const auto& alpha_T = data["alpha_T"];
 
     for (auto& p : points) {
         input.contour.emplace_back(p[0], p[1], 0.0);
+    }
+
+    for (auto& x : gasProfile["x"]) {
+        input.gas_xs.emplace_back(x);
+    }
+
+    for (auto& T : gasProfile["T"]) {
+        input.gas_Ts.emplace_back(T);
+    }
+    
+    for (auto& h : gasProfile["h"]) {
+        input.gas_hs.emplace_back(h);
     }
 
     input.chamber = input.contour.front();
@@ -44,6 +61,10 @@ SimulationInput Application::readInput(const std::string& path) {
                 return a.y < b.y;
             });
     }(input.contour);
+
+    for (auto& piece : alpha_T) {
+        input.alphaT.addSegment(piece["range"][0], piece["range"][1], piece["function"]);
+    }
 
     input.ac = chamber[0];
     input.bc = chamber[1];
@@ -63,6 +84,7 @@ SimulationInput Application::readInput(const std::string& path) {
     input.na = subdivisions["channel_along_circumference"];
 
     input.a = a;
+
 
     return input;
 }

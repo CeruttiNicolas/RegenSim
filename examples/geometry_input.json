@@ -1,5 +1,5 @@
 {
-  "knockdown_factor": 0.75,
+  "knockdown_factor": 0.5,
   "alpha_max": 5.5e-6,
   "sections": {
     "chamber": [
@@ -1353,11 +1353,11 @@
   "alpha_T": [
     {
       "range": [ 298.0, 980.0 ],
-      "function": "1.901 + 0.0034*T - 4.475e-7*T^2"
+      "function": "(1.901 + 0.0034*T - 4.475e-7*T^2) * 1e-6"
     },
     {
       "range": [ 1173.0, 1375.0 ],
-      "function": "2.233 + 0.0021*T - 1.85e-8*T^2"
+      "function": "(2.233 + 0.0021*T - 1.85e-8*T^2) * 1e-6"
     }
   ],
   "k_T": [

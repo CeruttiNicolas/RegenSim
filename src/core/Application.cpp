@@ -42,8 +42,28 @@ void Application::run() {
     }
     std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(rendererVertices, mesh.triangleIndices, mesh.lineIndices);
 
-	//exportMeshVTK("C:\\Users\\Nicolas\\Desktop\\output.vtk", mesh, input);
     std::unique_ptr<ThermalSolver> thermal = std::make_unique<ThermalSolver>(simInput, mesh);
+
+    int totalIterations = 60000;
+    int outputFrequency = 1000;
+
+	auto startTime = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < totalIterations; i++) {
+        thermal->solveStep();
+
+        if ((i + 1) % outputFrequency == 0) {
+            double residual = thermal->computeResidual();
+            std::cout << "Iteration " << (i + 1) << "/" << totalIterations << " | Max dT/dt: " << residual << " K/s\n";
+            //std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
+            //thermal->downloadTemperature(h_T.data());
+
+            //std::string filename = "C:\\Users\\Nicolas\\Desktop\\output_" + std::to_string(i + 1) + ".vtk";
+            //exportMeshVTK(filename, mesh.vertices, h_T, simInput);
+        }
+    }
+	auto endTime = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsedSeconds = endTime - startTime;
+	std::cout << "Simulation completed in " << elapsedSeconds.count() << " seconds.\n";
 
     vulkanRenderer->run("RegenSim");
 }

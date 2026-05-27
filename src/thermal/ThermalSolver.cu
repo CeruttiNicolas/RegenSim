@@ -170,7 +170,7 @@ void ThermalSolver::downloadTemperature(double* h_T) {
     CUDA_CHECK(cudaMemcpy(h_T, d_Told, numCells * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
-double ThermalSolver::computeResidual() {
+std::pair<double, double> ThermalSolver::computeResiduals() {
     size_t numCells = (size_t)Nx * Ny * Nz;
 
     std::vector<double> h_Told(numCells);
@@ -182,17 +182,22 @@ double ThermalSolver::computeResidual() {
     CUDA_CHECK(cudaMemcpy(h_Tnew.data(), d_Tnew, numCells * sizeof(double), cudaMemcpyDeviceToHost));
 
     double maxDeltaT_star = 0.0;
+	double sumDeltaT_star = 0.0;
 
     for (size_t i = 0; i < numCells; i++) {
 		// Nondimensional absolute temperature difference
         double diff = std::abs(h_Told[i] - h_Tnew[i]);
+
         if (diff > maxDeltaT_star) {
             maxDeltaT_star = diff;
         }
+
+		sumDeltaT_star += diff;
     }
 
 	// Get dimensional max rate of change in temperature (K/s)
     double maxRateOfChange = (maxDeltaT_star * Tref) / dt;
+	double sumRateOfChange = (sumDeltaT_star * Tref) / dt;
 
-    return maxRateOfChange;
+    return {maxRateOfChange, sumRateOfChange};
 }

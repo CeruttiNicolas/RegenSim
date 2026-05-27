@@ -7,6 +7,7 @@
 #include "mesher/Mesher.hpp"
 #include "thermal/ThermalSolver.cuh"
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <numbers>
 #include <numeric>
@@ -45,25 +46,70 @@ void Application::run() {
     std::unique_ptr<ThermalSolver> thermal = std::make_unique<ThermalSolver>(simInput, mesh);
 
     int totalIterations = 60000;
-    int outputFrequency = 1000;
+    int outputFrequency = 100;
+    int printCount = 0;
+
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm* now_tm = std::localtime(&now_c);
+    std::stringstream ss;
+    ss << std::put_time(now_tm, "%Y%m%d-%H%M%S");
+    std::string timePrefix = ss.str();
 
 	auto startTime = std::chrono::high_resolution_clock::now();
+
     for (int i = 0; i < totalIterations; i++) {
         thermal->solveStep();
 
         if ((i + 1) % outputFrequency == 0) {
-            double residual = thermal->computeResidual();
-            std::cout << "Iteration " << (i + 1) << "/" << totalIterations << " | Max dT/dt: " << residual << " K/s\n";
-            //std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
-            //thermal->downloadTemperature(h_T.data());
+            if (printCount % 20 == 0) {
+                std::cout << "\n"
+                    << std::setw(12) << std::right << "Iteration"
+                    << std::setw(15) << std::right << "Time [s]"
+                    << std::setw(22) << std::right << "Max dT/dt [K/s]"
+                    << std::setw(22) << std::right << "Sum dT/dt [K/s]"
+                    << "\n";
+                std::cout << std::string(72, '-') << "\n";
+            }
 
-            //std::string filename = "C:\\Users\\Nicolas\\Desktop\\output_" + std::to_string(i + 1) + ".vtk";
-            //exportMeshVTK(filename, mesh.vertices, h_T, simInput);
+            auto residuals = thermal->computeResiduals();
+			double maxResidual = residuals.first;
+			double sumResidual = residuals.second;
+
+            std::cout << std::setw(12) << std::right << (i + 1)
+				<< std::setw(15) << std::right << std::fixed << std::setprecision(4) << thermal->getCurrentTime()
+				<< std::setw(22) << std::right << std::scientific << std::setprecision(5) << maxResidual
+                << std::setw(22) << std::right << std::scientific << std::setprecision(5) << sumResidual
+
+                << "\n";
+
+            std::cout << std::defaultfloat;
+			printCount++;
+   //         if ((i + 1) % (outputFrequency * 1) == 0 || i + 1 == 100) {
+   //             std::cout << "Saving intermediate results...\n";
+   //             std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
+   //             thermal->downloadTemperature(h_T.data());
+
+   //             std::string filename = "C:\\Users\\Nicolas\\Desktop\\ThermalOutputs\\" + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
+   //             exportMeshVTK(filename, mesh.vertices, h_T, simInput);
+			//}
+
+            if (maxResidual < 1e-10) {
+	            auto endTime = std::chrono::high_resolution_clock::now();
+	            std::chrono::duration<double> elapsedSeconds = endTime - startTime;
+                std::cout << "Convergence achieved at iteration " << (i + 1) << ". Stopping simulation.\n"
+                          << "Simulation completed in " << elapsedSeconds.count() << " seconds.\n";
+                std::cout << "Saving convergence results...\n";
+                std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
+                thermal->downloadTemperature(h_T.data());
+
+                std::string filename = "C:\\Users\\Nicolas\\Desktop\\ThermalOutputs\\" + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
+                exportMeshVTK(filename, mesh.vertices, h_T, simInput);
+
+                break;
+            }
         }
     }
-	auto endTime = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsedSeconds = endTime - startTime;
-	std::cout << "Simulation completed in " << elapsedSeconds.count() << " seconds.\n";
 
     vulkanRenderer->run("RegenSim");
 }

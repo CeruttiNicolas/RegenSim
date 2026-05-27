@@ -2,6 +2,7 @@
 #include "core/SimulationInput.hpp"
 #include "mesher/Mesh.hpp"
 #include <vector>
+#include <utility>
 
 class ThermalSolver {
 public:
@@ -10,7 +11,9 @@ public:
 
 	void solveStep();
 	void downloadTemperature(double* h_T);
-	double computeResidual();
+	std::pair<double, double> computeResiduals();
+
+	double getCurrentTime() const { return currentTime; }
 
 private:
 	double interpolate1D(double xQuery, const std::vector<double>& X, const std::vector<double>& Y);

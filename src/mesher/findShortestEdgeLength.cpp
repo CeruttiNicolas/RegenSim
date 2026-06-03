@@ -23,11 +23,11 @@ void Mesher::computeShortestEdgeLength(const SimulationInput& input, Mesh& mesh)
 				    mesh.shortestEdgeLength = std::min(mesh.shortestEdgeLength, glm::distance(mesh.vertices[getIndex(x, y, z)], mesh.vertices[getIndex(x, y + 1, z)]));
                 }
 				// right
-                if (x < widthInNodes - 1) {
+                if (x < depthInNodes - 1) {
                     mesh.shortestEdgeLength = std::min(mesh.shortestEdgeLength, glm::distance(mesh.vertices[getIndex(x, y, z)], mesh.vertices[getIndex(x + 1, y, z)]));
                 }
 				// forward
-                if (z < depthInNodes - 1) {
+                if (z < widthInNodes - 1) {
                     mesh.shortestEdgeLength = std::min(mesh.shortestEdgeLength, glm::distance(mesh.vertices[getIndex(x, y, z)], mesh.vertices[getIndex(x, y, z + 1)]));
                 }
             }
@@ -35,5 +35,5 @@ void Mesher::computeShortestEdgeLength(const SimulationInput& input, Mesh& mesh)
 	}
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-	std::cout << "Shortest edge length found: " << mesh.shortestEdgeLength << " in " << elapsed.count() * 1000 << " milliseconds." << std::endl;
+	std::cout << "Shortest edge length found (" << mesh.shortestEdgeLength << ") in " << elapsed.count() * 1000 << " milliseconds." << std::endl;
 }

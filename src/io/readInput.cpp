@@ -23,6 +23,8 @@ SimulationInput Application::readInput(const std::string& path) {
     }
     // TODO: Validate JSON structure according to schema, see nlohmann library
     
+	setOutputPath(data["output_directory"]);
+
 	input.alphaMax = data["alpha_max"];
 	input.knockdownFactor = data["knockdown_factor"];
 

@@ -12,10 +12,19 @@ public:
     ~Application();
 
     void run();
+
+    std::string getOutputPath() const {
+        return outputDirectory;
+	}
+
+    void setOutputPath(std::string path) {
+        outputDirectory = path;
+    }
     
 private:
     bool visual = false;
     std::string inputFilePath;
+    std::string outputDirectory;
 
     SimulationInput simInput;
     SimulationInput readInput(const std::string& path);

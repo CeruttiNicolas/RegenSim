@@ -5,6 +5,7 @@
 #include "io/exportMeshVTK.hpp"
 #include "mesher/Mesh.hpp"
 #include "mesher/Mesher.hpp"
+#include "fluid/Voxelizer.hpp"
 #include "thermal/ThermalSolver.cuh"
 #include <filesystem>
 #include <iomanip>
@@ -44,6 +45,9 @@ void Application::run() {
     std::unique_ptr<VulkanRenderer> vulkanRenderer = std::make_unique<VulkanRenderer>(rendererVertices, mesh.triangleIndices, mesh.lineIndices);
 
     std::unique_ptr<ThermalSolver> thermal = std::make_unique<ThermalSolver>(simInput, mesh);
+
+	std::unique_ptr<Voxelizer> voxelizer = std::make_unique<Voxelizer>(simInput, mesh, *this, mesh.shortestEdgeLength, 8);
+	voxelizer->run();
 
     int totalIterations = 60000;
     int outputFrequency = 100;
@@ -90,7 +94,7 @@ void Application::run() {
    //             std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
    //             thermal->downloadTemperature(h_T.data());
 
-   //             std::string filename = "C:\\Users\\Nicolas\\Desktop\\ThermalOutputs\\" + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
+   //             std::string filename = application.getOutputPath() + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
    //             exportMeshVTK(filename, mesh.vertices, h_T, simInput);
 			//}
 
@@ -103,7 +107,7 @@ void Application::run() {
                 std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
                 thermal->downloadTemperature(h_T.data());
 
-                std::string filename = "C:\\Users\\Nicolas\\Desktop\\ThermalOutputs\\" + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
+                std::string filename = outputDirectory + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
                 exportMeshVTK(filename, mesh.vertices, h_T, simInput);
 
                 break;
@@ -111,5 +115,4 @@ void Application::run() {
         }
     }
 
-    vulkanRenderer->run("RegenSim");
 }

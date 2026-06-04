@@ -29,6 +29,10 @@ list(APPEND SRC_FILES ${CLI_SRC_FILES})
 file(GLOB CORE_SRC_FILES src/core/*.cpp)
 list(APPEND SRC_FILES ${CORE_SRC_FILES})
 
+# Fluid source files
+file(GLOB FLUID_SRC_FILES src/fluid/*.cpp src/fluid/*.cu)
+list(APPEND SRC_FILES ${FLUID_SRC_FILES})
+
 # Graphics source files
 file(GLOB GRAPHICS_SRC_FILES src/graphics/*.cpp)
 list(APPEND SRC_FILES ${GRAPHICS_SRC_FILES})
@@ -57,6 +61,10 @@ list(APPEND HEADER_FILES ${CLI_HEADER_FILES})
 # Core header files
 file(GLOB CORE_HEADER_FILES src/core/*.hpp)
 list(APPEND HEADER_FILES ${CORE_HEADER_FILES})
+
+# Fluid header files
+file(GLOB FLUID_HEADER_FILES src/fluid/*.hpp src/fluid/*.cuh)
+list(APPEND HEADER_FILES ${FLUID_HEADER_FILES})
 
 # Graphics header files
 file(GLOB GRAPHICS_HEADER_FILES src/graphics/*.hpp)

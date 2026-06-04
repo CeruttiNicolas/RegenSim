@@ -1,5 +1,6 @@
 {
-  "knockdown_factor": 0.5,
+  "output_directory": "C:\\Users\\Nicolas\\Desktop\\ThermalOutputs\\",
+  "knockdown_factor": 0.75,
   "alpha_max": 5.5e-6,
   "sections": {
     "chamber": [

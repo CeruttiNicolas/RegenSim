@@ -117,11 +117,12 @@ ThermalSolver::ThermalSolver(const SimulationInput& input, const Mesh& mesh) {
 	double total_db = (double)total_byte;
 	double used_db = total_db - free_db;
 
-	std::cout << "GPU VRAM Status:" << std::endl;
+	std::cout << "--- GPU VRAM Status ---------" << std::endl;
 	std::cout << "  Total VRAM : " << total_db / (1024.0 * 1024.0) << " MB" << std::endl;
 	std::cout << "  Used VRAM  : " << used_db / (1024.0 * 1024.0) << " MB" << std::endl;
 	std::cout << "  Free VRAM  : " << free_db / (1024.0 * 1024.0) << " MB" << std::endl;
-	std::cout << "Initialized thermal solver." << std::endl;
+	std::cout << "-----------------------------\n" << std::endl;
+	std::cout << "Initialized thermal solver.\n" << std::endl;
 }
 
 ThermalSolver::~ThermalSolver() {

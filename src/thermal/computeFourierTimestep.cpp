@@ -30,10 +30,11 @@ void ThermalSolver::computeFourierTimestep() {
 	// Clean Fourier number
 	this->dtStar = this->dt / this->tRef;
 
-	std::cout << "Timestep Optimization:" << std::endl;
+	std::cout << "\n--- Timestep Optimization ---" << std::endl;
 	std::cout << "  Raw dt max   : " << dtMax << std::endl;
 	std::cout << "  Raw Fo max   : " << dtStarMax << std::endl;
 	std::cout << "  Clean dt     : " << this->dt << std::endl;
 	std::cout << "  Clean Fo     : " << this->dtStar << std::endl;
 	std::cout << "  Safety Margin: " << dtMax / this->dt - 1.0 << std::endl;
+	std::cout << "-----------------------------\n" << std::endl;
 }

@@ -11,7 +11,6 @@ int Mesher::getThroatIndex(const std::vector<glm::dvec3>& contour) {
         [](const glm::dvec3& a, const glm::dvec3& b) {
             return a.y < b.y;
         });
-    std::cout << "Found throat at index " << std::distance(contour.cbegin(), it) << std::endl;
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Finding throat index took " << elapsed.count() * 1000 << " milliseconds." << std::endl;

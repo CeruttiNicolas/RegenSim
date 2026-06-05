@@ -46,10 +46,10 @@ void Application::run() {
 
     std::unique_ptr<ThermalSolver> thermal = std::make_unique<ThermalSolver>(simInput, mesh);
 
-	std::unique_ptr<Voxelizer> voxelizer = std::make_unique<Voxelizer>(simInput, mesh, *this, mesh.shortestEdgeLength, 8);
-	voxelizer->run();
+	//std::unique_ptr<Voxelizer> voxelizer = std::make_unique<Voxelizer>(simInput, mesh, *this, mesh.shortestEdgeLength, 8);
+	//voxelizer->run();
 
-    int totalIterations = 60000;
+    int totalIterations = 15000;
     int outputFrequency = 100;
     int printCount = 0;
 
@@ -98,7 +98,7 @@ void Application::run() {
    //             exportMeshVTK(filename, mesh.vertices, h_T, simInput);
 			//}
 
-            if (maxResidual < 1e-10) {
+            if (maxResidual < 5e-9) {
 	            auto endTime = std::chrono::high_resolution_clock::now();
 	            std::chrono::duration<double> elapsedSeconds = endTime - startTime;
                 std::cout << "Convergence achieved at iteration " << (i + 1) << ". Stopping simulation.\n"
@@ -107,12 +107,19 @@ void Application::run() {
                 std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
                 thermal->downloadTemperature(h_T.data());
 
-                std::string filename = outputDirectory + timePrefix + "_output_" + std::to_string(i + 1) + ".vtk";
-                exportMeshVTK(filename, mesh.vertices, h_T, simInput);
-
+                std::string filename = outputDirectory + timePrefix + "_output_" + std::to_string(i + 1);
+                exportMasterPVTU(filename, 1);
+                exportPieceVTU(filename, 0, mesh.vertices, h_T, simInput);
                 break;
             }
         }
+        if ((i + 1)== totalIterations) {
+            std::cout << "Maximum iterations reached without convergence.\n";
+            std::vector<double> h_T((size_t)mesh.Nx * mesh.Ny * mesh.Nz);
+            thermal->downloadTemperature(h_T.data());
+            std::string filename = outputDirectory + timePrefix + "_final_output_" + std::to_string(i + 1);
+            exportMasterPVTU(filename, 1);
+            exportPieceVTU(filename, 0, mesh.vertices, h_T, simInput);
+		}
     }
-
 }

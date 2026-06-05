@@ -35,6 +35,9 @@ private:
 
 	// Subdivisions
 	int ni, nb, nw, na;
+
+	// Runge Kutta coefficients
+	std::vector<double> rk_alphas;
 	
 	// Time
 	double tRef;
@@ -57,8 +60,9 @@ private:
 	double* d_DistZ;
 
 	// Temperatures
-	double* d_Told;
-	double* d_Tnew;
+	double* d_T_anchor; // Q(0):   frozen state at the start of the timestep
+	double* d_T_read;   // Q(i-1): current stage state used to compute gradients
+	double* d_T_write;  // Q(i):   new stage state being computed
 
 	// Gas profiles
 	double* d_Tgas_star;

@@ -28,6 +28,16 @@ SimulationInput Application::readInput(const std::string& path) {
 	input.alphaMax = data["alpha_max"];
 	input.knockdownFactor = data["knockdown_factor"];
 
+    if (data.contains("rk_alphas")) {
+        for (auto& alpha : data["rk_alphas"]) {
+            input.rk_alphas.push_back(alpha);
+        }
+    }
+    else {
+        // Fallback to 1-Stage Forward Euler if not found in JSON
+        input.rk_alphas = { 1.0 };
+    }
+
     input.channelNumber = data["channel_number"];
     const auto& chamber = data["sections"]["chamber"];
     const auto& throat = data["sections"]["throat"];

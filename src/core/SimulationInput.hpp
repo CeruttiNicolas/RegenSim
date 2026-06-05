@@ -21,6 +21,8 @@ struct SimulationInput {
     double alphaMax;
 	double knockdownFactor;
 
+    std::vector<double> rk_alphas;
+
     Piecewise alphaT;
     Piecewise kT;
 

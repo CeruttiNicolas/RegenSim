@@ -2,6 +2,7 @@
   "output_directory": "C:\\Users\\Nicolas\\Desktop\\ThermalOutputs\\",
   "knockdown_factor": 0.75,
   "alpha_max": 5.5e-6,
+  "rk_alphas": [ 0.25, 0.16666666666666, 0.375, 0.5, 1.0 ],
   "sections": {
     "chamber": [
       0.0036,

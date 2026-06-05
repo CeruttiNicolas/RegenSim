@@ -29,6 +29,9 @@ ThermalSolver::ThermalSolver(const SimulationInput& input, const Mesh& mesh) {
 	this->nw = input.nw;
 	this->na = input.na;
 
+	// Runge Kutta coefficients
+	this->rk_alphas = input.rk_alphas;
+
 	computeFourierTimestep();
 
     std::vector<double> h_Tgas_star(Nx, 0.0);
@@ -47,7 +50,7 @@ ThermalSolver::ThermalSolver(const SimulationInput& input, const Mesh& mesh) {
     std::vector<double> h_alphaTable = input.alphaT.generateLUT(0.0, 4000.0, 1.0);
     std::vector<double> h_kTable = input.kT.generateLUT(0.0, 4000.0, 1.0);
 
-	int tableSize = h_alphaTable.size();
+	size_t tableSize = h_alphaTable.size();
 
 	// Compute grid sizes
 	size_t numCells = Nx * Ny * Nz;
@@ -95,8 +98,9 @@ ThermalSolver::ThermalSolver(const SimulationInput& input, const Mesh& mesh) {
 	CUDA_CHECK(cudaMemcpy(d_kTable, h_kTable.data(), tableSize * sizeof(double), cudaMemcpyHostToDevice));
 
 	// Allocate GPU memory for temperatures
-	CUDA_CHECK(cudaMalloc(&d_Told, numCells * sizeof(double)));
-	CUDA_CHECK(cudaMalloc(&d_Tnew, numCells * sizeof(double)));
+	CUDA_CHECK(cudaMalloc(&d_T_anchor, numCells * sizeof(double)));
+	CUDA_CHECK(cudaMalloc(&d_T_read, numCells * sizeof(double)));
+	CUDA_CHECK(cudaMalloc(&d_T_write, numCells * sizeof(double)));
 
 	// Populate initial temperatures on the device
 	double TstarInitial = 293.15 / Tref;
@@ -104,7 +108,9 @@ ThermalSolver::ThermalSolver(const SimulationInput& input, const Mesh& mesh) {
 	int threadsPerBlock1D = 256;
 	int blocksPerGrid1D = (numCells + threadsPerBlock1D - 1) / threadsPerBlock1D;
 
-	initTemperatureKernel KERNEL_LAUNCH(blocksPerGrid1D, threadsPerBlock1D) (d_Told, d_Tnew, TstarInitial, numCells);
+	initTemperatureKernel KERNEL_LAUNCH(blocksPerGrid1D, threadsPerBlock1D) (d_T_anchor, d_T_read, TstarInitial, numCells);
+
+	CUDA_CHECK(cudaMemcpy(d_T_write, d_T_anchor, numCells * sizeof(double), cudaMemcpyDeviceToDevice));
 
 	cudaDeviceSynchronize();
 
@@ -133,10 +139,13 @@ ThermalSolver::~ThermalSolver() {
     cudaFree(d_DistX);
     cudaFree(d_DistY);
     cudaFree(d_DistZ);
-    cudaFree(d_Told);
-    cudaFree(d_Tnew);
+    cudaFree(d_T_anchor);
+	cudaFree(d_T_read);
+	cudaFree(d_T_write);
     cudaFree(d_Tgas_star);
     cudaFree(d_hgas);
+	cudaFree(d_alphaTable);
+	cudaFree(d_kTable);
 }
 
 void ThermalSolver::solveStep() {
@@ -147,52 +156,73 @@ void ThermalSolver::solveStep() {
         (Nz + threadsPerBlock.z - 1) / threadsPerBlock.z
     );
 
-    heatConductionKernel KERNEL_LAUNCH(numBlocks, threadsPerBlock) (
-        d_Told, d_Tnew,
-        d_Volumes,
-        d_AreasX, d_AreasY, d_AreasZ,
-        d_DistX, d_DistY, d_DistZ,
-		d_alphaTable, d_kTable,
-		d_Tgas_star, d_hgas,
-		dt, Tref, Lref,
-        Nx, Ny, Nz,
-		ni, nb, nw, na
-    );
+	// Reset the read buffer to the frozen Q(0) state
+	size_t numCells = (size_t)Nx * Ny * Nz;
+	CUDA_CHECK(cudaMemcpy(d_T_read, d_T_anchor, numCells * sizeof(double), cudaMemcpyDeviceToDevice));
+	
+	// Multi-stage loop handled by the host
+	int numStages = rk_alphas.size();
+	for (int stage = 0; stage < numStages; stage++) {
+		heatConductionKernel KERNEL_LAUNCH(numBlocks, threadsPerBlock) (
+			d_T_anchor, d_T_read, d_T_write,
+			d_Volumes,
+			d_AreasX, d_AreasY, d_AreasZ,
+			d_DistX, d_DistY, d_DistZ,
+			d_alphaTable, d_kTable,
+			d_Tgas_star, d_hgas,
+			dt, Tref, Lref, rk_alphas[stage],
+			Nx, Ny, Nz,
+			ni, nb, nw, na
+			);
 
-    double* temp = d_Told;
-    d_Told = d_Tnew;
-    d_Tnew = temp;
+		// Swap read and write pointers for the next stage
+		double* temp = d_T_read;
+		d_T_read = d_T_write;
+		d_T_write = temp;
+	}
+
+	// At the end of the loop d_T_read holds the final stage result
+	// It is swapped with d_T_anchor, that now holds the next timestep
+	// d_T_read holds the old timestep
+	double* temp2 = d_T_anchor;
+	d_T_anchor = d_T_read;
+	d_T_read = temp2;
 
     currentTime += dt;
 }
 
 void ThermalSolver::downloadTemperature(double* h_T) {
-    size_t numCells = (size_t)Nx * Ny * Nz;
-    CUDA_CHECK(cudaMemcpy(h_T, d_Told, numCells * sizeof(double), cudaMemcpyDeviceToHost));
+	size_t numCells = (size_t)Nx * Ny * Nz;
+	CUDA_CHECK(cudaMemcpy(h_T, d_T_anchor, numCells * sizeof(double), cudaMemcpyDeviceToHost));
 }
 
 std::pair<double, double> ThermalSolver::computeResiduals() {
-    size_t numCells = (size_t)Nx * Ny * Nz;
+	size_t numCells = (size_t)Nx * Ny * Nz;
 
-    std::vector<double> h_Told(numCells);
-    std::vector<double> h_Tnew(numCells);
+	std::vector<double> h_T_old(numCells);
+	std::vector<double> h_T_new(numCells);
 
     // Download both temperature fields to the host
     // Note: after the swap in solveStep, d_Told is the new step, d_Tnew is the old step
-    CUDA_CHECK(cudaMemcpy(h_Told.data(), d_Told, numCells * sizeof(double), cudaMemcpyDeviceToHost));
-    CUDA_CHECK(cudaMemcpy(h_Tnew.data(), d_Tnew, numCells * sizeof(double), cudaMemcpyDeviceToHost));
+	CUDA_CHECK(cudaMemcpy(h_T_old.data(), d_T_read, numCells * sizeof(double), cudaMemcpyDeviceToHost));
+	CUDA_CHECK(cudaMemcpy(h_T_new.data(), d_T_anchor, numCells * sizeof(double), cudaMemcpyDeviceToHost));
 
     double maxDeltaT_star = 0.0;
 	double sumDeltaT_star = 0.0;
 
     for (size_t i = 0; i < numCells; i++) {
+		int x = i / (Ny * Nz);
+		int rem = i % (Ny * Nz);
+		int z = rem / Ny;
+		int y = rem % Ny;
+
+		if (!IS_SOLID(y, z)) continue;
+
+
 		// Nondimensional absolute temperature difference
-        double diff = std::abs(h_Told[i] - h_Tnew[i]);
+        double diff = std::abs(h_T_old[i] - h_T_new[i]);
 
-        if (diff > maxDeltaT_star) {
-            maxDeltaT_star = diff;
-        }
-
+        if (diff > maxDeltaT_star) maxDeltaT_star = diff;
 		sumDeltaT_star += diff;
     }
 

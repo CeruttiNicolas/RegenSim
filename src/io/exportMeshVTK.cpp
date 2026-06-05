@@ -1,4 +1,5 @@
 #include "exportMeshVTK.hpp"
+#include <cstdint>
 
 std::vector<Hex> generateHexes(const std::vector<glm::dvec3>& mesh, const SimulationInput& input) {
     std::vector<Hex> hexes;
@@ -28,6 +29,170 @@ std::vector<Hex> generateHexes(const std::vector<glm::dvec3>& mesh, const Simula
     return hexes;
 }
 
+template <typename T>
+void writeVTKBinaryBlock(std::ofstream& out, const std::vector<T>& data) {
+    // VTK appended binary format requires a 32-bit unsigned integer 
+    // specifying the block size in bytes before the actual data.
+    uint32_t num_bytes = static_cast<uint32_t>(data.size() * sizeof(T));
+    out.write(reinterpret_cast<const char*>(&num_bytes), sizeof(uint32_t));
+    out.write(reinterpret_cast<const char*>(data.data()), num_bytes);
+}
+
+// =====================================================================
+// MASTER PVTU WRITER (Rank 0 only)
+// =====================================================================
+void exportMasterPVTU(const std::string& base_filename, int num_ranks) {
+    std::string filename = base_filename + ".pvtu";
+    std::ofstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open master file " << filename << " for writing.\n";
+        return;
+    }
+
+    file << "<?xml version=\"1.0\"?>\n"
+        << "<VTKFile type=\"PUnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+        << "  <PUnstructuredGrid GhostLevel=\"0\">\n"
+        << "    <PPoints>\n"
+        << "      <PDataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"appended\"/>\n"
+        << "    </PPoints>\n"
+        << "    <PCellData>\n"
+        << "      <PDataArray type=\"Float32\" Name=\"T\" format=\"appended\"/>\n"
+        << "    </PCellData>\n";
+
+    // Extract just the filename without the path directories so the .pvtu can find the relative pieces
+    std::string pure_basename = base_filename;
+    size_t last_slash = pure_basename.find_last_of("\\/");
+    if (last_slash != std::string::npos) {
+        pure_basename = pure_basename.substr(last_slash + 1);
+    }
+
+    // Point to the individual pieces written by the worker ranks
+    for (int i = 0; i < num_ranks; i++) {
+        file << "    <Piece Source=\"" << pure_basename << "_" << i << ".vtu\"/>\n";
+    }
+
+    file << "  </PUnstructuredGrid>\n"
+        << "</VTKFile>\n";
+}
+
+// =====================================================================
+// WORKER VTU CHUNK WRITER (Every Rank)
+// =====================================================================
+bool exportPieceVTU(
+    const std::string& base_filename,
+    int rank,
+    const std::vector<glm::dvec3>& points,
+    const std::vector<double>& T,
+    const SimulationInput& input)
+{
+    std::string filename = base_filename + "_" + std::to_string(rank) + ".vtu";
+    // MUST open in binary mode
+    std::ofstream file(filename, std::ios::binary);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open piece file " << filename << " for writing.\n";
+        return false;
+    }
+
+    int nodesY = input.ni + input.nb + input.no + 1;
+    int nodesZ = 2 * input.nw + input.na + 1;
+    int nodesX = points.size() / (nodesY * nodesZ);
+
+    int Nx = nodesX - 1;
+    int Ny = nodesY - 1;
+    int Nz = nodesZ - 1;
+
+    std::vector<Hex> hexes = generateHexes(points, input);
+
+    uint32_t num_pts = points.size();
+    uint32_t num_cells = hexes.size();
+
+    // --- A. Flatten Data for Binary Writing ---
+    std::vector<float> pts_flat(num_pts * 3);
+    for (size_t i = 0; i < num_pts; ++i) {
+        pts_flat[i * 3 + 0] = static_cast<float>(points[i].x);
+        pts_flat[i * 3 + 1] = static_cast<float>(points[i].y);
+        pts_flat[i * 3 + 2] = static_cast<float>(points[i].z);
+    }
+
+    std::vector<int32_t> connectivity(num_cells * 8);
+    std::vector<int32_t> offsets(num_cells);
+    std::vector<uint8_t> cell_types(num_cells, 12); // 12 = VTK_HEXAHEDRON
+    std::vector<float> T_flat;
+    T_flat.reserve(num_cells);
+
+    for (size_t i = 0; i < num_cells; ++i) {
+        connectivity[i * 8 + 0] = static_cast<int32_t>(hexes[i].v0);
+        connectivity[i * 8 + 1] = static_cast<int32_t>(hexes[i].v1);
+        connectivity[i * 8 + 2] = static_cast<int32_t>(hexes[i].v2);
+        connectivity[i * 8 + 3] = static_cast<int32_t>(hexes[i].v3);
+        connectivity[i * 8 + 4] = static_cast<int32_t>(hexes[i].v4);
+        connectivity[i * 8 + 5] = static_cast<int32_t>(hexes[i].v5);
+        connectivity[i * 8 + 6] = static_cast<int32_t>(hexes[i].v6);
+        connectivity[i * 8 + 7] = static_cast<int32_t>(hexes[i].v7);
+
+        offsets[i] = static_cast<int32_t>((i + 1) * 8);
+    }
+
+    // Extract the valid cell temperatures (skipping the channel exactly like generateHexes does)
+    for (int i = 0; i < Nx; i++) {
+        for (int j = 0; j < Ny; j++) {
+            for (int k = 0; k < Nz; k++) {
+                bool inChannelz = k >= input.nw && k < input.nw + input.na;
+                bool inChannely = j >= input.ni && j < input.ni + input.nb;
+                if (inChannely && inChannelz) continue;
+
+                int idxCell = j + (k * Ny) + (i * Ny * Nz);
+                T_flat.push_back(static_cast<float>(T[idxCell]));
+            }
+        }
+    }
+
+    // --- B. Calculate Byte Offsets for XML Header ---
+    size_t off_pts = 0;
+    size_t off_conn = off_pts + sizeof(uint32_t) + (pts_flat.size() * sizeof(float));
+    size_t off_offs = off_conn + sizeof(uint32_t) + (connectivity.size() * sizeof(int32_t));
+    size_t off_type = off_offs + sizeof(uint32_t) + (offsets.size() * sizeof(int32_t));
+    size_t off_T = off_type + sizeof(uint32_t) + (cell_types.size() * sizeof(uint8_t));
+
+    // --- C. Write XML Layout ---
+    file << "<?xml version=\"1.0\"?>\n"
+        << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+        << "  <UnstructuredGrid>\n"
+        << "    <Piece NumberOfPoints=\"" << num_pts << "\" NumberOfCells=\"" << num_cells << "\">\n";
+
+    file << "      <Points>\n"
+        << "        <DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"appended\" offset=\"" << off_pts << "\"/>\n"
+        << "      </Points>\n";
+
+    file << "      <Cells>\n"
+        << "        <DataArray type=\"Int32\" Name=\"connectivity\" format=\"appended\" offset=\"" << off_conn << "\"/>\n"
+        << "        <DataArray type=\"Int32\" Name=\"offsets\" format=\"appended\" offset=\"" << off_offs << "\"/>\n"
+        << "        <DataArray type=\"UInt8\" Name=\"types\" format=\"appended\" offset=\"" << off_type << "\"/>\n"
+        << "      </Cells>\n";
+
+    file << "      <CellData>\n"
+        << "        <DataArray type=\"Float32\" Name=\"T\" format=\"appended\" offset=\"" << off_T << "\"/>\n"
+        << "      </CellData>\n"
+        << "    </Piece>\n"
+        << "  </UnstructuredGrid>\n";
+
+    // --- D. Write Raw Binary Block ---
+    // The appended data MUST start with a literal underscore '_' before the raw bytes begin.
+    file << "  <AppendedData encoding=\"raw\">\n_";
+
+    writeVTKBinaryBlock(file, pts_flat);
+    writeVTKBinaryBlock(file, connectivity);
+    writeVTKBinaryBlock(file, offsets);
+    writeVTKBinaryBlock(file, cell_types);
+    writeVTKBinaryBlock(file, T_flat);
+
+    file << "\n  </AppendedData>\n</VTKFile>\n";
+
+    file.close();
+    return true;
+}
 
 bool exportMeshVTK(
     const std::string& filename,
